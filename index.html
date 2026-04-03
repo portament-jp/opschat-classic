@@ -1,0 +1,1696 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>オプスチャット - 6つのチャットツールをAIで統合管理</title>
+<meta property="og:title" content="オプスチャット - 6つのチャットを1つの画面で。">
+<meta property="og:description" content="Slack・Gmail・Chatwork・Teams・LINE WORKS・MessengerをAIで統合管理。未読確認・返信・送信をワンストップで。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://portament-jp.github.io/opschat-lp/">
+<meta property="og:site_name" content="オプスチャット by PORTAMENT">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="オプスチャット - 6つのチャットを1つの画面で。">
+<meta name="twitter:description" content="Slack・Gmail・Chatwork・Teams・LINE WORKS・MessengerをAIで統合管理。">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@200;300;400;500;600;700;900&family=Noto+Sans+JP:wght@300;400;500;600;700&family=Zen+Old+Mincho:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Noto Sans JP', sans-serif; background: #F5F0E8; color: #1C1C1C; overflow-x: hidden; }
+  a { text-decoration: none; color: inherit; }
+
+  :root {
+    --ink: #1C1C1C; --ink-light: #3A3A3A; --ink-faint: #7A7A70;
+    --green: #2D4A3E; --green-light: #3D6652; --green-dark: #1B3A2D;
+    --gold: #B8860B; --gold-light: #D4A84B; --gold-bg: rgba(184,134,11,.06);
+    --red: #B33B24; --red-light: #D4573E;
+    --paper: #F5F0E8; --paper-warm: #EDE6DA; --paper-dark: #E0D8C8; --paper-fold: #D8CFC0;
+    --wood: #8B7355; --wood-light: #A89070;
+    --serif: 'Zen Old Mincho', 'Noto Serif JP', serif;
+    --sans: 'Noto Sans JP', sans-serif;
+    --slack: #4a154b; --slack-light: #e01e5a;
+    --chatwork: #e2383f; --teams: #5b5fc7;
+    --gmail: #ea4335; --lineworks: #00c73c; --messenger: #0084ff;
+  }
+
+  /* Washi paper texture */
+  .washi { background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='.03'/%3E%3C/svg%3E");
+  }
+
+  /* Paper fold effect */
+  .paper-fold { position: relative; }
+  .paper-fold::before { content:''; position:absolute; top:0; left:50%; width:1px; height:100%; background:linear-gradient(180deg,transparent,var(--paper-fold),transparent); opacity:.5; pointer-events:none; }
+  .paper-fold::after { content:''; position:absolute; top:0; left:calc(50% - 20px); width:40px; height:100%; background:linear-gradient(90deg,transparent,rgba(0,0,0,.008),transparent,rgba(255,255,255,.03),transparent); pointer-events:none; }
+
+  /* Decorative divider */
+  .divider { display:flex; align-items:center; justify-content:center; gap:12px; margin:0 auto; padding:40px 0; }
+  .divider-line { width:50px; height:1px; background:var(--green); opacity:.2; }
+  .divider-diamond { width:6px; height:6px; background:var(--green); transform:rotate(45deg); opacity:.3; }
+
+  /* Red seal (rakkan) */
+  .seal { display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px; border:2px solid var(--red); border-radius:4px; color:var(--red); font-family:var(--serif); font-size:14px; font-weight:900; letter-spacing:0; line-height:1.1; text-align:center; transform:rotate(-3deg); opacity:.8; }
+
+  /* Vertical text decoration */
+  .vert-text { position:absolute; writing-mode:vertical-rl; font-family:var(--serif); font-size:12px; color:var(--paper-fold); letter-spacing:8px; font-weight:300; pointer-events:none; user-select:none; }
+
+  /* ===== NAV ===== */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(245,240,232,0.96); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--paper-dark);
+    padding: 0 32px; height: 60px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .nav-brand { display: flex; align-items: center; gap: 10px; }
+  .nav-brand-text {
+    font-family: var(--serif); font-size: 18px; font-weight: 900;
+    color: var(--ink); letter-spacing: 3px;
+  }
+  .nav-brand-sub {
+    font-size: 9px; color: var(--ink-faint); font-weight: 400;
+    letter-spacing: 1px; display: block; font-family: var(--sans);
+  }
+  .nav-links { display: flex; gap: 28px; font-size: 12px; color: var(--ink-faint); font-family: var(--sans); }
+  .nav-links a:hover { color: var(--green); }
+  .nav-links a.nav-cta { color: var(--green); font-weight: 600; }
+  .nav-logos { display: flex; align-items: center; }
+  .nav-logos img { height: 48px; object-fit: contain; }
+
+  /* ===== HERO ===== */
+  .hero {
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 120px 24px 80px; position: relative; overflow: hidden;
+    background: var(--paper);
+  }
+  .hero::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(45,74,62,.03) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 50%, rgba(184,134,11,.02) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .hero-label {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(45,74,62,.06); border: 2px solid var(--red);
+    padding: 8px 20px; border-radius: 4px; font-size: 12px; color: var(--red);
+    margin-bottom: 28px; font-weight: 600; font-family: var(--serif);
+  }
+  .hero-label .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--red); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  .hero h1 {
+    font-family: var(--serif); font-size: clamp(30px, 5vw, 52px); font-weight: 900; line-height: 1.5;
+    margin-bottom: 20px; letter-spacing: 3px; color: var(--ink); position: relative;
+  }
+  .hero h1 .gradient {
+    color: var(--green); font-style: normal; position: relative; display: inline-block;
+  }
+  .hero h1 .gradient::after {
+    content: ''; position: absolute; bottom: 2px; left: -4px; right: -4px;
+    height: 8px; background: rgba(45,74,62,.08); z-index: -1;
+  }
+  .hero-sub {
+    font-family: var(--serif); font-size: clamp(13px, 1.8vw, 16px); color: var(--ink-light);
+    max-width: 640px; line-height: 2.2; margin-bottom: 36px; font-weight: 300;
+  }
+  .hero-sub strong { color: var(--ink); font-weight: 700; }
+
+  /* Tool icons row */
+  .tool-icons {
+    display: flex; gap: 16px; margin-bottom: 48px; flex-wrap: wrap; justify-content: center;
+  }
+  .tool-icon {
+    width: 56px; height: 56px; display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--paper-dark); background: var(--paper-warm);
+    transition: all 0.3s; cursor: default; position: relative;
+  }
+  .tool-icon svg { width: 30px; height: 30px; }
+  .tool-icon img { width: 36px; height: 36px; object-fit: contain; border-radius: 4px; }
+  .tool-icon:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.06); border-color: var(--green); }
+  .tool-label { position: absolute; bottom: -20px; font-size: 9px; color: var(--ink-faint); white-space: nowrap; font-weight: 500; font-family: var(--sans); }
+
+  .hero-cta { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  .btn {
+    padding: 14px 36px; font-size: 14px; font-weight: 600; font-family: var(--serif);
+    text-decoration: none; transition: all 0.3s; cursor: pointer; border: none; letter-spacing: 2px;
+  }
+  .btn-primary { background: var(--green); color: var(--paper); }
+  .btn-primary:hover { background: var(--green-dark); }
+  .btn-outline { background: transparent; color: var(--green); border: 1px solid var(--green); }
+  .btn-outline:hover { background: var(--green); color: var(--paper); }
+
+  /* ===== SECTION ===== */
+  section { padding: 80px 24px; max-width: 1200px; margin: 0 auto; }
+  .section-label {
+    font-family: var(--sans); font-size: 10px; letter-spacing: 5px;
+    color: var(--green); font-weight: 600; margin-bottom: 12px; opacity: .6;
+  }
+  .section-title {
+    font-family: var(--serif); font-size: clamp(22px, 3.5vw, 30px); font-weight: 900;
+    margin-bottom: 12px; letter-spacing: 2px; color: var(--ink); line-height: 1.3;
+  }
+  .section-desc {
+    font-family: var(--sans); font-size: 13px; color: var(--ink-faint);
+    max-width: 600px; line-height: 2; margin-bottom: 40px;
+  }
+
+  /* ===== PROBLEM SECTION ===== */
+  #problem { background: var(--paper-warm); max-width: none; padding: 80px 24px; }
+  #problem > * { max-width: 1200px; margin-left: auto; margin-right: auto; }
+  .problem-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px;
+    max-width: 1200px;
+  }
+  .problem-card {
+    background: var(--paper); border: 1px solid var(--paper-dark);
+    padding: 28px 24px; transition: all 0.3s; position: relative;
+  }
+  .problem-card::before {
+    content: ''; position: absolute; top: 12px; left: 0; width: 3px; height: 24px;
+    background: var(--red); opacity: .5;
+  }
+  .problem-card:hover { border-color: var(--red-light); }
+  .problem-icon { font-size: 28px; margin-bottom: 14px; }
+  .problem-card h3 { font-family: var(--serif); font-size: 15px; font-weight: 700; margin-bottom: 8px; color: var(--ink); }
+  .problem-card p { font-size: 11px; color: var(--ink-faint); line-height: 1.9; }
+
+  /* ===== SOLUTION / FEATURE CARDS ===== */
+  .feature-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;
+  }
+  .feature-card {
+    background: var(--paper); border: 1px solid var(--paper-dark);
+    padding: 28px 20px; transition: all 0.3s; position: relative; overflow: hidden; text-align: center;
+  }
+  .feature-card::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+    background: var(--green); transform: scaleX(0); transition: transform 0.3s; transform-origin: left;
+  }
+  .feature-card:hover::after { transform: scaleX(1); }
+  .feature-card:hover { border-color: var(--green); }
+  .feature-emoji { font-size: 32px; margin-bottom: 16px; display: block; }
+  .feature-card h3 { font-family: var(--serif); font-size: 14px; font-weight: 700; margin-bottom: 6px; color: var(--ink); line-height: 1.5; }
+  .feature-card p { font-size: 11px; color: var(--ink-faint); line-height: 1.8; }
+
+  /* ===== USE CASES ===== */
+  .hub-uc-section { padding: 80px 24px; background: var(--paper-warm); }
+  .hub-uc-inner { max-width: 960px; margin: 0 auto; }
+  .hub-uc-label { display: inline-block; font-size: 10px; font-weight: 600; color: var(--green); letter-spacing: 5px; margin-bottom: 12px; font-family: var(--sans); opacity: .6; }
+  .hub-uc-title { font-family: var(--serif); font-size: clamp(22px, 3.5vw, 30px); font-weight: 900; color: var(--ink); margin: 0 0 8px; line-height: 1.3; letter-spacing: 2px; }
+  .hub-uc-subtitle { font-size: 13px; color: var(--ink-faint); margin: 0 0 32px; line-height: 2; font-family: var(--sans); }
+  .hub-uc-tabs { display: flex; gap: 8px; margin-bottom: 32px; flex-wrap: wrap; }
+  .hub-uc-tab {
+    padding: 10px 20px; font-size: 13px; font-weight: 500; font-family: var(--serif);
+    color: var(--ink-faint); background: var(--paper); border: 1px solid var(--paper-dark);
+    cursor: pointer; transition: all 0.2s;
+  }
+  .hub-uc-tab:hover { color: var(--green); border-color: var(--green); }
+  .hub-uc-tab.active { color: var(--paper); background: var(--green); border-color: var(--green); }
+  .hub-uc-content { display: none; background: var(--paper); border: 1px solid var(--paper-dark); overflow: hidden; animation: hub-uc-fadeIn 0.3s ease; }
+  @keyframes hub-uc-fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .hub-uc-content.active { display: block; }
+  .hub-uc-card { padding: 32px; }
+  .hub-uc-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .hub-uc-card-icon { width: 48px; height: 48px; background: rgba(45,74,62,.06); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+  .hub-uc-card-title { font-family: var(--serif); font-size: 18px; font-weight: 700; color: var(--ink); margin: 0 0 2px; }
+  .hub-uc-card-role { font-size: 11px; color: var(--ink-faint); }
+  .hub-uc-card-desc { font-size: 13px; color: var(--ink-light); line-height: 2; margin-bottom: 24px; }
+  .hub-uc-ba { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .hub-uc-ba-item { padding: 20px; }
+  .hub-uc-ba-before { background: rgba(179,59,36,.04); border: 1px solid rgba(179,59,36,.15); }
+  .hub-uc-ba-after { background: rgba(45,74,62,.04); border: 1px solid rgba(45,74,62,.15); }
+  .hub-uc-ba-label { font-size: 11px; font-weight: 600; letter-spacing: 1px; margin-bottom: 8px; font-family: var(--sans); }
+  .hub-uc-ba-before .hub-uc-ba-label { color: var(--red); }
+  .hub-uc-ba-after .hub-uc-ba-label { color: var(--green); }
+  .hub-uc-ba-list { list-style: none; padding: 0; margin: 0; font-size: 11px; line-height: 2; color: var(--ink-light); }
+  .hub-uc-ba-list li::before { margin-right: 6px; }
+  .hub-uc-ba-before .hub-uc-ba-list li::before { content: "\2715 "; color: var(--red); font-weight: 600; }
+  .hub-uc-ba-after .hub-uc-ba-list li::before { content: "\2713 "; color: var(--green); font-weight: 600; }
+  @media (max-width: 560px) {
+    .hub-uc-ba { grid-template-columns: 1fr; }
+    .hub-uc-title { font-size: 22px; }
+    .hub-uc-section { padding: 60px 20px; }
+    .hub-uc-card { padding: 24px 20px; }
+  }
+
+  /* ===== ARCHITECTURE DIAGRAM ===== */
+  .arch-section { text-align: center; }
+  .arch-diagram {
+    background: var(--green-dark); border: 1px solid var(--green); border-radius: 0;
+    padding: 48px 32px; max-width: 900px; margin: 0 auto; position: relative;
+    color: var(--paper);
+  }
+  .arch-layer { display: flex; flex-direction: column; align-items: center; gap: 24px; }
+  .arch-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center; }
+  .arch-box {
+    background: rgba(245,240,232,.08); border: 1px solid rgba(245,240,232,.15);
+    padding: 14px 20px; font-size: 13px; font-weight: 600; text-align: center;
+    min-width: 100px; transition: all 0.3s; color: var(--paper); font-family: var(--serif);
+  }
+  .arch-box:hover { border-color: var(--gold-light); transform: scale(1.03); }
+  .arch-box.ai { background: rgba(184,134,11,.15); border-color: rgba(184,134,11,.4); color: var(--gold-light); min-width: 260px; }
+  .arch-box.tool { min-width: 80px; font-size: 11px; font-family: var(--sans); }
+  .arch-box.tool.slack { border-color: rgba(74,21,75,0.5); color: var(--slack-light); }
+  .arch-box.tool.gmail { border-color: rgba(234,67,53,0.3); color: var(--gmail); }
+  .arch-box.tool.chatwork { border-color: rgba(226,56,63,0.3); color: var(--chatwork); }
+  .arch-box.tool.teams { border-color: rgba(91,95,199,0.3); color: var(--teams); }
+  .arch-box.tool.lineworks { border-color: rgba(0,199,60,0.3); color: var(--lineworks); }
+  .arch-box.tool.messenger { border-color: rgba(0,132,255,0.3); color: var(--messenger); }
+  .arch-arrow { color: rgba(245,240,232,.4); font-size: 20px; }
+  .arch-label { font-size: 11px; color: rgba(245,240,232,.4); }
+
+  /* ===== INTERACTIVE DEMO ===== */
+  .hub-demo { background:#0f1623; overflow:hidden; color:#e2e8f0; max-width:1100px; margin:0 auto; border:1px solid var(--green-dark); box-shadow:0 25px 60px rgba(0,0,0,0.15); }
+  .hub-header { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; background:var(--green-dark); border-bottom:1px solid rgba(245,240,232,.1); }
+  .hub-header-left { display:flex; align-items:center; gap:8px; }
+  .hub-status-dot { width:8px; height:8px; border-radius:50%; background:#22c55e; animation:hub-pulse 2s ease-in-out infinite; }
+  @keyframes hub-pulse { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
+  .hub-header-title { font-size:13px; font-weight:500; color:rgba(245,240,232,.6); font-family:var(--serif); }
+  .hub-demo-badge { font-size:11px; color:var(--ink-faint); padding:3px 8px; border:1px solid rgba(245,240,232,.1); letter-spacing:0.5px; font-family:var(--sans); }
+  .hub-main { display:flex; min-height:520px; }
+  .hub-menubar { width:48px; background:#0c1018; border-right:1px solid #1e2a3e; display:flex; flex-direction:column; align-items:center; padding:8px 0; flex-shrink:0; }
+  .hub-mi { width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-direction:column; cursor:pointer; margin-bottom:2px; position:relative; font-size:14px; color:#64748b; background:none; border:none; font-family:inherit; transition:background 0.15s,color 0.15s; }
+  .hub-mi:hover { background:#1a2236; color:#cbd5e1; }
+  .hub-mi.active { color:#e2e8f0; }
+  .hub-mi.active::before { content:''; position:absolute; left:-4px; top:8px; bottom:8px; width:3px; border-radius:0 3px 3px 0; background:var(--green); }
+  .hub-mi-lbl { font-size:7px; color:#64748b; margin-top:1px; letter-spacing:-0.3px; line-height:1; }
+  .hub-mi.active .hub-mi-lbl { color:#94a3b8; }
+  .hub-mi-dot { position:absolute; top:3px; right:3px; width:7px; height:7px; border-radius:50%; background:var(--red); border:2px solid #0c1018; }
+  .hub-mi-sep { width:24px; height:1px; background:#1e2a3e; margin:4px 0; }
+  .hub-sidebar { width:210px; border-right:1px solid #1e2a3e; display:flex; flex-direction:column; flex-shrink:0; overflow-y:auto; scrollbar-width:thin; scrollbar-color:#1e2a3e transparent; }
+  .hub-sb-hdr { padding:10px 12px; border-bottom:1px solid #1e2a3e; font-size:13px; font-weight:600; color:#e2e8f0; display:flex; align-items:center; gap:6px; }
+  .hub-sb-search { margin:6px 8px; padding:5px 8px; background:#1a2236; border:1px solid #1e2a3e; border-radius:5px; font-size:11px; color:#475569; }
+  .hub-sb-fav { padding:4px 0; border-bottom:1px solid #1e2a3e; }
+  .hub-sb-fav-t { padding:5px 12px; font-size:10px; font-weight:600; color:#fbbf24; display:flex; align-items:center; gap:4px; }
+  .hub-sb-sec { padding:2px 0; }
+  .hub-sb-sec-t { padding:5px 12px; font-size:10px; font-weight:600; color:#64748b; cursor:pointer; display:flex; align-items:center; gap:4px; user-select:none; }
+  .hub-sb-sec-t:hover { color:#94a3b8; }
+  .hub-sb-sec-arr { font-size:9px; transition:transform 0.15s; }
+  .hub-sb-sec.closed .hub-sb-sec-arr { transform:rotate(-90deg); }
+  .hub-sb-sec.closed .hub-sb-sec-bd { display:none; }
+  .hub-sb-ws { padding:4px 12px 2px 20px; font-size:10px; font-weight:600; color:#94a3b8; display:flex; align-items:center; gap:4px; cursor:pointer; }
+  .hub-sb-ws:hover { color:#cbd5e1; }
+  .hub-sb-self { padding:1px 12px 3px 28px; font-size:9px; color:#475569; font-style:italic; }
+  .hub-sb-cat { padding:3px 12px 3px 28px; font-size:10px; color:#64748b; cursor:pointer; display:flex; align-items:center; gap:4px; }
+  .hub-sb-cat:hover { color:#94a3b8; }
+  .hub-sb-ch { padding:4px 12px 4px 38px; font-size:11px; color:#94a3b8; cursor:pointer; display:flex; align-items:center; gap:5px; transition:background 0.1s; }
+  .hub-sb-ch:hover { background:#151c2c; color:#cbd5e1; }
+  .hub-sb-ch.active { background:#1a2236; color:#e2e8f0; }
+  .hub-sb-ch-l1 { padding-left:20px; }
+  .hub-sb-ch-ico { font-size:10px; flex-shrink:0; }
+  .hub-sb-ch-nm { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .hub-sb-ch-bd { background:var(--red); color:#fff; font-size:9px; font-weight:600; padding:1px 5px; border-radius:8px; flex-shrink:0; }
+  .hub-sb-ch-unread .hub-sb-ch-nm { color:#e2e8f0; font-weight:600; }
+  .hub-sb-act { padding:6px 0; }
+  .hub-sb-act-item { padding:7px 12px; cursor:pointer; transition:background 0.1s; border-bottom:1px solid #0f1623; }
+  .hub-sb-act-item:hover { background:#151c2c; }
+  .hub-sb-act-hdr { display:flex; align-items:center; gap:4px; margin-bottom:2px; }
+  .hub-sb-act-tool { font-size:9px; font-weight:600; padding:1px 4px; border-radius:3px; }
+  .hub-sb-act-name { font-size:11px; font-weight:500; color:#e2e8f0; }
+  .hub-sb-act-ch { font-size:10px; color:#64748b; }
+  .hub-sb-act-prev { font-size:10px; color:#94a3b8; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .hub-sb-act-time { font-size:9px; color:#475569; margin-top:1px; }
+  .hub-sb-act-badge { font-size:9px; padding:1px 4px; border-radius:3px; display:inline-block; margin-bottom:2px; }
+  .hub-sb-act-filters { padding:6px 12px; display:flex; gap:4px; border-bottom:1px solid #1e2a3e; }
+  .hub-sb-act-f { padding:3px 8px; font-size:10px; background:none; border:1px solid #1e2a3e; border-radius:4px; color:#64748b; cursor:pointer; font-family:inherit; }
+  .hub-sb-act-f:hover { border-color:#475569; color:#94a3b8; }
+  .hub-sb-act-f.active { background:var(--green); border-color:var(--green); color:#fff; }
+  .hub-center { flex:1; min-width:0; border-right:1px solid #1e2a3e; display:flex; flex-direction:column; overflow-y:auto; scrollbar-width:thin; scrollbar-color:#1e2a3e transparent; }
+  .hub-ctr-hdr { padding:10px 14px; border-bottom:1px solid #1e2a3e; font-size:12px; font-weight:600; color:#e2e8f0; display:flex; align-items:center; gap:6px; }
+  .hub-ctr-ph { flex:1; display:flex; align-items:center; justify-content:center; color:#475569; font-size:12px; }
+  .hub-thr { padding:10px 14px; border-bottom:1px solid #1a2236; cursor:pointer; transition:background 0.1s; }
+  .hub-thr:hover { background:#151c2c; }
+  .hub-thr.active { background:#1a2236; }
+  .hub-thr-row { display:flex; align-items:center; gap:7px; }
+  .hub-thr-av { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; color:#fff; flex-shrink:0; }
+  .hub-thr-meta { flex:1; min-width:0; }
+  .hub-thr-top { display:flex; justify-content:space-between; align-items:center; }
+  .hub-thr-name { font-size:12px; font-weight:500; color:#e2e8f0; }
+  .hub-thr-time { font-size:9px; color:#475569; }
+  .hub-thr-prev { font-size:11px; color:#64748b; margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .hub-thr-stats { display:flex; gap:8px; margin-top:3px; font-size:9px; color:#475569; }
+  .hub-right { width:340px; display:flex; flex-direction:column; flex-shrink:0; }
+  .hub-rt-hdr { padding:10px 14px; border-bottom:1px solid #1e2a3e; }
+  .hub-rt-title { font-size:12px; font-weight:600; color:#e2e8f0; }
+  .hub-rt-sub { font-size:10px; color:#64748b; }
+  .hub-rt-sender { font-size:10px; color:var(--green-light); margin-top:2px; font-style:italic; }
+  .hub-rt-ph { flex:1; display:flex; align-items:center; justify-content:center; color:#475569; font-size:12px; }
+  .hub-rt-chat { flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:10px; scrollbar-width:thin; scrollbar-color:#1e2a3e transparent; }
+  @keyframes hub-fadeL { from{opacity:0;transform:translateX(-8px);} to{opacity:1;transform:translateX(0);} }
+  @keyframes hub-fadeR { from{opacity:0;transform:translateX(8px);} to{opacity:1;transform:translateX(0);} }
+  @keyframes hub-fadeIn { from{opacity:0;} to{opacity:1;} }
+  .hub-bub-them { display:flex; gap:6px; align-items:flex-start; max-width:90%; animation:hub-fadeL 0.3s ease; }
+  .hub-bub-them-av { width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:8px; color:#fff; flex-shrink:0; margin-top:2px; }
+  .hub-bub-them-ct { flex:1; min-width:0; }
+  .hub-bub-them-nm { font-size:10px; font-weight:500; color:#94a3b8; margin-bottom:1px; }
+  .hub-bub-them-text { background:#1a2236; border-radius:2px 10px 10px 10px; padding:8px 11px; font-size:12px; line-height:1.7; color:#cbd5e1; }
+  .hub-bub-ai-wrap { display:flex; flex-direction:column; align-items:flex-end; max-width:90%; margin-left:auto; animation:hub-fadeR 0.3s ease; }
+  .hub-bub-ai-label { display:flex; align-items:center; gap:4px; margin-bottom:2px; }
+  .hub-bub-ai-dot { width:5px; height:5px; border-radius:50%; background:var(--green); }
+  .hub-bub-ai-tag { font-size:9px; color:var(--green-light); font-weight:500; }
+  .hub-bub-ai-sent { font-size:9px; color:#4ade80; margin-left:3px; }
+  .hub-bub-ai-text { background:#1b2e25; border:1px solid #2d4a3e; border-radius:10px 2px 10px 10px; padding:8px 11px; font-size:12px; line-height:1.7; white-space:pre-line; min-width:100px; width:100%; }
+  .hub-bub-ai-text.sent { color:#8ba89a; }
+  .hub-bub-ai-text.active { color:#b8d4c6; }
+  .hub-typing-ind { color:var(--green); font-size:11px; }
+  .hub-edit-ta { width:100%; background:#162216; border:1px solid var(--green); border-radius:6px; padding:7px 10px; font-size:12px; line-height:1.7; color:#b8d4c6; font-family:inherit; resize:vertical; min-height:60px; outline:none; }
+  .hub-edit-ta:focus { border-color:var(--green-light); }
+  .hub-edit-note { font-size:9px; color:#64748b; margin-top:4px; font-style:italic; }
+  .hub-actions { display:none; margin-top:6px; gap:6px; flex-wrap:wrap; }
+  .hub-actions.visible { display:flex; }
+  .hub-btn-send { padding:5px 14px; font-size:11px; background:var(--green); color:#fff; border:none; border-radius:5px; cursor:pointer; font-family:inherit; font-weight:500; }
+  .hub-btn-send:hover { background:var(--green-dark); }
+  .hub-btn-edit { padding:5px 14px; font-size:11px; background:none; color:#b8d4c6; border:1px solid var(--green); border-radius:5px; cursor:pointer; font-family:inherit; }
+  .hub-btn-regen { padding:5px 14px; font-size:11px; background:none; color:#94a3b8; border:1px solid #2d3748; border-radius:5px; cursor:pointer; font-family:inherit; }
+  .hub-btn-cancel { padding:5px 14px; font-size:11px; background:none; color:#94a3b8; border:1px solid #2d3748; border-radius:5px; cursor:pointer; font-family:inherit; }
+  .hub-sent-confirm { font-size:10px; color:#4ade80; display:flex; align-items:center; gap:3px; }
+  .hub-incoming-note { text-align:center; padding:4px 0; animation:hub-fadeIn 0.3s ease; }
+  .hub-incoming-note span { font-size:10px; color:#64748b; background:#1a2236; padding:3px 10px; border-radius:8px; }
+  .hub-complete { text-align:center; padding:10px 0; animation:hub-fadeIn 0.5s ease; }
+  .hub-complete-inner { display:inline-flex; flex-direction:column; align-items:center; gap:4px; background:#0c1a12; padding:10px 18px; border-radius:8px; border:1px solid #14532d; }
+  .hub-complete-icon { color:#4ade80; font-size:16px; }
+  .hub-complete-title { font-size:11px; color:#4ade80; font-weight:500; }
+  .hub-complete-sub { font-size:9px; color:#64748b; }
+  .hub-back-btn { display:none; background:none; border:none; color:#94a3b8; font-size:16px; cursor:pointer; padding:0 4px; }
+  .hub-footer { padding:7px 14px; background:var(--green-dark); border-top:1px solid rgba(245,240,232,.1); display:flex; align-items:center; justify-content:space-between; }
+  .hub-footer-status { font-size:10px; color:#22c55e; }
+  .hub-footer-brand { font-size:9px; color:rgba(245,240,232,.2); font-family:var(--serif); }
+  @media (max-width:900px) { .hub-right { display:none; } .hub-center { border-right:none; } }
+  @media (max-width:700px) { .hub-menubar { width:40px; } .hub-sidebar { width:170px; } }
+  @media (max-width:560px) {
+    .hub-main { flex-direction:column; min-height:420px; }
+    .hub-menubar { flex-direction:row; width:100%; height:38px; border-right:none; border-bottom:1px solid #1e2a3e; overflow-x:auto; padding:2px 6px; }
+    .hub-mi { width:30px; height:30px; margin-bottom:0; margin-right:2px; } .hub-mi-sep { width:1px; height:18px; margin:0 3px; } .hub-mi-lbl { display:none; } .hub-mi.active::before { display:none; }
+    .hub-sidebar { width:100%; border-right:none; max-height:180px; } .hub-sidebar.hidden { display:none; }
+    .hub-center { border-right:none; } .hub-center.hidden { display:none; }
+    .hub-right { display:flex!important; width:100%; } .hub-right.hidden { display:none!important; }
+    .hub-back-btn { display:block!important; }
+  }
+
+  /* ===== FLOW SECTION ===== */
+  #flow { background: var(--paper-warm); max-width: none; padding: 80px 24px; }
+  #flow > * { max-width: 1200px; margin-left: auto; margin-right: auto; }
+  .flow-steps {
+    display: flex; gap: 0; align-items: flex-start; justify-content: center; flex-wrap: wrap;
+    max-width: 1200px;
+  }
+  .flow-step {
+    flex: 0 0 200px; text-align: center; padding: 24px 16px; position: relative;
+  }
+  .flow-step-num {
+    width: 44px; height: 44px; background: var(--green); color: var(--paper);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--serif); font-size: 20px; font-weight: 200;
+    margin: 0 auto 14px;
+  }
+  .flow-step h4 { font-family: var(--serif); font-size: 14px; font-weight: 700; margin-bottom: 6px; color: var(--ink); }
+  .flow-step p { font-size: 11px; color: var(--ink-faint); line-height: 1.7; }
+  .flow-arrow {
+    flex: 0 0 40px; display: flex; align-items: center; justify-content: center;
+    color: var(--green); font-size: 20px; padding-top: 30px; opacity: .3;
+  }
+
+  /* ===== COMPARISON TABLE ===== */
+  #compare { background: var(--paper-warm); max-width: none; padding: 80px 24px; }
+  #compare > * { max-width: 1200px; margin-left: auto; margin-right: auto; }
+  .compare-table {
+    width: 100%; border-collapse: collapse; margin-top: 24px;
+    max-width: 1200px; background: var(--paper); overflow: hidden;
+    border: 1px solid var(--paper-dark);
+  }
+  .compare-table th, .compare-table td {
+    padding: 14px 20px; text-align: left; border-bottom: 1px solid var(--paper-dark); font-size: 13px;
+  }
+  .compare-table th {
+    background: var(--green-dark); color: rgba(245,240,232,.6); font-weight: 600;
+    font-size: 11px; letter-spacing: 1px; font-family: var(--sans);
+  }
+  .compare-table td:first-child { font-weight: 600; color: var(--ink); font-family: var(--serif); }
+  .compare-table tr:hover { background: rgba(45,74,62,.04); }
+  .check { color: var(--green); font-weight: 700; }
+  .cross { color: var(--red); }
+
+  /* ===== SECURITY SECTION ===== */
+  .hub-sec-section { padding: 80px 24px; background: var(--paper); }
+  .hub-sec-inner { max-width: 960px; margin: 0 auto; }
+  .hub-sec-label { display: inline-block; font-size: 10px; font-weight: 600; color: var(--green); letter-spacing: 5px; margin-bottom: 12px; font-family: var(--sans); opacity: .6; }
+  .hub-sec-title { font-family: var(--serif); font-size: clamp(22px, 3.5vw, 30px); font-weight: 900; color: var(--ink); margin: 0 0 8px; line-height: 1.3; letter-spacing: 2px; }
+  .hub-sec-subtitle { font-size: 13px; color: var(--ink-faint); margin: 0 0 48px; line-height: 2; }
+  .hub-sec-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  @media (max-width: 640px) {
+    .hub-sec-grid { grid-template-columns: 1fr; }
+    .hub-sec-title { font-size: 22px; }
+    .hub-sec-section { padding: 60px 20px; }
+  }
+  .hub-sec-card {
+    background: var(--paper-warm); border: 1px solid var(--paper-dark);
+    padding: 28px 24px; transition: all 0.2s; position: relative;
+  }
+  .hub-sec-card::before {
+    content: ''; position: absolute; top: 0; left: 0; width: 2px; height: 100%;
+    background: var(--green); opacity: .3;
+  }
+  .hub-sec-card:hover { border-color: var(--green); }
+  .hub-sec-card-icon {
+    width: 44px; height: 44px; background: rgba(45,74,62,.06);
+    display: flex; align-items: center; justify-content: center; margin-bottom: 16px;
+  }
+  .hub-sec-card-icon svg {
+    width: 22px; height: 22px; stroke: var(--green); fill: none;
+    stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+  }
+  .hub-sec-card-title { font-family: var(--serif); font-size: 15px; font-weight: 700; color: var(--ink); margin: 0 0 8px; }
+  .hub-sec-card-text { font-size: 11px; color: var(--ink-faint); line-height: 1.9; margin: 0; }
+
+  /* ===== FAQ Section ===== */
+  .hub-faq-section { padding: 80px 24px; background: var(--paper-warm); }
+  .hub-faq-inner { max-width: 760px; margin: 0 auto; }
+  .hub-faq-label { display: inline-block; font-size: 10px; font-weight: 600; color: var(--green); letter-spacing: 5px; margin-bottom: 12px; font-family: var(--sans); opacity: .6; }
+  .hub-faq-title { font-family: var(--serif); font-size: clamp(22px, 3.5vw, 30px); font-weight: 900; color: var(--ink); margin: 0 0 8px; line-height: 1.3; letter-spacing: 2px; }
+  .hub-faq-subtitle { font-size: 13px; color: var(--ink-faint); margin: 0 0 40px; line-height: 2; }
+  @media (max-width: 640px) {
+    .hub-faq-title { font-size: 22px; }
+    .hub-faq-section { padding: 60px 20px; }
+  }
+  .hub-faq-list { display: flex; flex-direction: column; gap: 12px; }
+  .hub-faq-item {
+    background: var(--paper); border: 1px solid var(--paper-dark);
+    overflow: hidden; transition: border-color 0.2s;
+  }
+  .hub-faq-item.open { border-color: var(--green); }
+  .hub-faq-q {
+    display: flex; align-items: center; gap: 12px; padding: 18px 20px;
+    cursor: pointer; background: none; border: none; width: 100%;
+    text-align: left; font-family: inherit; transition: background 0.15s;
+  }
+  .hub-faq-q:hover { background: var(--paper-warm); }
+  .hub-faq-q-badge {
+    width: 28px; height: 28px; background: rgba(45,74,62,.08);
+    color: var(--green); font-size: 12px; font-weight: 700; font-family: var(--sans);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .hub-faq-q-text { flex: 1; font-family: var(--serif); font-size: 14px; font-weight: 500; color: var(--ink); line-height: 1.5; }
+  .hub-faq-q-arrow { width: 20px; height: 20px; flex-shrink: 0; transition: transform 0.2s; color: var(--ink-faint); }
+  .hub-faq-item.open .hub-faq-q-arrow { transform: rotate(180deg); color: var(--green); }
+  .hub-faq-a { max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease; }
+  .hub-faq-item.open .hub-faq-a { max-height: 300px; }
+  .hub-faq-a-inner { padding: 0 20px 20px 60px; font-size: 12px; color: var(--ink-faint); line-height: 2; }
+  .hub-faq-a-inner strong { color: var(--ink); font-weight: 600; }
+
+  /* ===== ROI SIMULATOR ===== */
+  .hub-sim-section { padding: 80px 24px; background: var(--paper); }
+  .hub-sim-inner { max-width: 700px; margin: 0 auto; }
+  .hub-sim-label { display: inline-block; font-size: 10px; font-weight: 600; color: var(--green); letter-spacing: 5px; margin-bottom: 12px; font-family: var(--sans); opacity: .6; }
+  .hub-sim-title { font-family: var(--serif); font-size: clamp(22px, 3.5vw, 30px); font-weight: 900; color: var(--ink); margin: 0 0 8px; line-height: 1.3; letter-spacing: 2px; }
+  .hub-sim-subtitle { font-size: 13px; color: var(--ink-faint); margin: 0 0 40px; line-height: 2; }
+  .hub-sim-card { background: var(--paper-warm); border: 1px solid var(--paper-dark); padding: 32px; }
+  .hub-sim-slider-group { margin-bottom: 24px; }
+  .hub-sim-slider-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .hub-sim-slider-text { font-size: 13px; color: var(--ink-light); font-family: var(--sans); }
+  .hub-sim-slider-value { font-family: var(--serif); font-size: 18px; font-weight: 700; color: var(--ink); min-width: 70px; text-align: right; }
+  .hub-sim-range { width: 100%; height: 6px; -webkit-appearance: none; appearance: none; background: var(--paper-dark); border-radius: 3px; outline: none; cursor: pointer; }
+  .hub-sim-range::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--green); cursor: pointer; border: 3px solid var(--paper); box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+  .hub-sim-range::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: var(--green); cursor: pointer; border: 3px solid var(--paper); box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+  .hub-sim-results { border-top: 1px solid var(--paper-dark); padding-top: 24px; margin-top: 8px; }
+  .hub-sim-results-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .hub-sim-result-box { background: var(--paper); border: 1px solid var(--paper-dark); padding: 20px; text-align: center; transition: border-color 0.2s; }
+  .hub-sim-result-box:hover { border-color: var(--green); }
+  .hub-sim-result-label { font-size: 11px; color: var(--ink-faint); margin-bottom: 4px; font-family: var(--sans); }
+  .hub-sim-result-value { font-family: var(--serif); font-size: 28px; font-weight: 900; line-height: 1.2; }
+  .hub-sim-result-value.blue { color: var(--green); }
+  .hub-sim-result-value.green { color: var(--gold); }
+  .hub-sim-result-sub { background: var(--paper); border: 1px solid var(--paper-dark); padding: 16px; text-align: center; }
+  .hub-sim-result-sub .hub-sim-result-value { font-size: 22px; color: var(--ink); }
+  .hub-sim-note { font-size: 10px; color: var(--ink-faint); text-align: center; margin-top: 16px; line-height: 1.8; }
+  .hub-sim-cta { text-align: center; margin-top: 24px; }
+  .hub-sim-cta-btn {
+    display: inline-flex; align-items: center; gap: 8px; padding: 14px 32px;
+    font-size: 14px; font-weight: 600; font-family: var(--serif);
+    color: var(--paper); background: var(--green); border: none;
+    cursor: pointer; text-decoration: none; transition: all 0.3s; letter-spacing: 2px;
+  }
+  .hub-sim-cta-btn:hover { background: var(--green-dark); }
+  @media (max-width: 560px) {
+    .hub-sim-title { font-size: 22px; }
+    .hub-sim-section { padding: 60px 20px; }
+    .hub-sim-card { padding: 24px 20px; }
+  }
+  @media (max-width: 400px) { .hub-sim-results-grid { grid-template-columns: 1fr; } }
+
+  /* ===== CTA Banner ===== */
+  .hub-cta-banner {
+    padding: 80px 24px; text-align: center;
+    background: var(--green); position: relative; overflow: hidden;
+  }
+  .hub-cta-banner::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+  .hub-cta-banner-title {
+    font-family: var(--serif); font-size: clamp(22px, 3.5vw, 30px); font-weight: 900;
+    color: var(--paper); margin: 0 0 12px; line-height: 1.5; letter-spacing: 3px;
+    position: relative;
+  }
+  .hub-cta-banner-sub {
+    font-size: 14px; color: rgba(245,240,232,0.5); font-family: var(--sans);
+    margin: 0 0 32px; line-height: 1.8; position: relative;
+  }
+  .hub-cta-banner-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 16px 44px; font-size: 14px; font-weight: 700; font-family: var(--serif);
+    color: var(--green); background: var(--paper); border: none;
+    cursor: pointer; text-decoration: none; letter-spacing: 3px;
+    transition: all 0.3s; position: relative;
+  }
+  .hub-cta-banner-btn:hover { background: var(--gold-light); color: var(--green-dark); }
+  @media (max-width: 560px) {
+    .hub-cta-banner-title { font-size: 22px; }
+    .hub-cta-banner { padding: 60px 20px; }
+  }
+
+  /* ===== Floating CTA ===== */
+  .hub-float-cta {
+    position: fixed; bottom: 24px; right: 24px; z-index: 1000;
+    animation: hub-float-slideUp 0.6s ease 1s both;
+  }
+  @keyframes hub-float-slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .hub-float-cta-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 14px 24px; font-size: 13px; font-weight: 600; font-family: var(--serif);
+    color: var(--paper); background: var(--green); border: none;
+    cursor: pointer; text-decoration: none; letter-spacing: 1px;
+    box-shadow: 0 4px 20px rgba(45,74,62,0.4);
+    transition: all 0.2s;
+  }
+  .hub-float-cta-btn:hover {
+    background: var(--green-dark);
+    box-shadow: 0 6px 28px rgba(45,74,62,0.5);
+    transform: translateY(-2px);
+  }
+  .hub-float-cta-icon { width: 18px; height: 18px; flex-shrink: 0; }
+  @media (max-width: 480px) {
+    .hub-float-cta { bottom: 16px; right: 16px; }
+    .hub-float-cta-btn { padding: 12px 20px; font-size: 12px; }
+  }
+
+  /* ===== FOOTER ===== */
+  footer {
+    text-align: center; padding: 28px 24px; color: var(--ink-faint); font-size: 10px;
+    font-family: var(--sans); border-top: 1px solid var(--paper-dark); background: var(--paper);
+  }
+  .footer-logos {
+    display: flex; align-items: center; justify-content: center; gap: 24px;
+    margin-bottom: 16px;
+  }
+  .footer-logos img { height: 32px; object-fit: contain; }
+
+  /* ===== ANIMATIONS ===== */
+  @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+  .fade-up { opacity: 0; transform: translateY(30px); transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+  .fade-up.visible { opacity: 1; transform: translateY(0); }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 768px) {
+    nav { padding: 0 16px; }
+    .nav-links { display: none; }
+    .nav-logos img { height: 36px; }
+    section { padding: 60px 20px; }
+    .hero { padding: 100px 20px 60px; }
+    .flow-arrow { display: none; }
+    .flow-step { flex: 0 0 140px; }
+    .vert-text { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">
+    <div>
+      <span class="nav-brand-text">オプスチャット</span>
+      <span class="nav-brand-sub">OPSCHAT</span>
+    </div>
+  </div>
+  <div class="nav-links">
+    <a href="#problem">課題</a>
+    <a href="#solution">機能</a>
+    <a href="#usecases">活用シーン</a>
+    <a href="#demo">デモ</a>
+    <a href="#architecture">仕組み</a>
+    <a href="#security">安全性</a>
+    <a href="#faq">FAQ</a>
+    <a href="#compare">比較</a>
+    <a href="https://www.portament.jp/contact" target="_blank" class="nav-cta">お問い合わせ</a>
+  </div>
+  <div class="nav-logos">
+    <img src="img/opsguide-logo.jpg" alt="OpsGuide" />
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero washi paper-fold">
+  <div class="vert-text" style="top:140px;left:24px">六ツノ声ヲ一ツニ</div>
+  <div class="vert-text" style="top:200px;right:24px">オプスチャット</div>
+  <div style="position:relative;animation:fadeUp .8s .2s ease both;max-width:720px;">
+    <div class="hero-label"><span class="dot"></span>AI統合メッセージング</div>
+    <h1>
+      6つのチャットを<br>
+      <span class="gradient">1つの画面で。</span>
+    </h1>
+    <p class="hero-sub">
+      Slack・Gmail・Chatwork・Teams・LINE WORKS・Messenger<br>
+      <strong>AIが全ツールを統合管理</strong>し、未読確認・返信・送信を一元化。<br>
+      ツール切り替えのストレスから解放されます。
+    </p>
+    <div class="tool-icons">
+      <div class="tool-icon slack">
+        <img src="img/slack-logo.png" alt="Slack" />
+        <span class="tool-label">Slack</span>
+      </div>
+      <div class="tool-icon gmail">
+        <img src="img/gmail-logo.webp" alt="Gmail" />
+        <span class="tool-label">Gmail</span>
+      </div>
+      <div class="tool-icon chatwork">
+        <img src="img/chatwork-logo.jpg" alt="Chatwork" />
+        <span class="tool-label">Chatwork</span>
+      </div>
+      <div class="tool-icon teams">
+        <svg viewBox="0 0 24 24"><path d="M20.625 8.5h-6.25a.625.625 0 0 0-.625.625v6.25c0 .345.28.625.625.625H18v3.125a.625.625 0 0 0 .625.625h.125A3.25 3.25 0 0 0 22 16.5V9.75a1.25 1.25 0 0 0-1.375-1.25z" fill="#5b5fc7"/><circle cx="19.5" cy="5.5" r="2.5" fill="#5b5fc7"/><path d="M13.5 7h-9A1.5 1.5 0 0 0 3 8.5v7A1.5 1.5 0 0 0 4.5 17h3v3.5a.5.5 0 0 0 .854.354L12 17h1.5a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 13.5 7z" fill="#5b5fc7"/><circle cx="9" cy="3.5" r="3" fill="#5b5fc7"/></svg>
+        <span class="tool-label">Teams</span>
+      </div>
+      <div class="tool-icon lineworks">
+        <img src="img/lineworks-logo.png" alt="LINE WORKS" />
+        <span class="tool-label">LINE WORKS</span>
+      </div>
+      <div class="tool-icon messenger">
+        <svg viewBox="0 0 24 24"><path d="M12 0C5.24 0 0 4.952 0 11.64c0 3.498 1.434 6.52 3.77 8.61a.96.96 0 0 1 .33.68l.07 2.12a.96.96 0 0 0 1.35.85l2.37-1.05a.96.96 0 0 1 .64-.04c1.08.3 2.23.46 3.43.46 6.76 0 12-4.95 12-11.64C24 4.952 18.76 0 12 0z" fill="#0084ff"/><path d="M4.79 14.96l3.53-5.6a1.5 1.5 0 0 1 2.17-.4l2.81 2.11a.6.6 0 0 0 .72 0l3.8-2.88c.5-.39 1.16.2.82.74l-3.53 5.6a1.5 1.5 0 0 1-2.17.4l-2.81-2.11a.6.6 0 0 0-.72 0l-3.8 2.88c-.5.39-1.16-.2-.82-.74z" fill="#fff"/></svg>
+        <span class="tool-label">Messenger</span>
+      </div>
+    </div>
+    <div class="hero-cta">
+      <a href="#demo" class="btn btn-primary">デモを見る</a>
+      <a href="https://www.portament.jp/contact" target="_blank" class="btn btn-outline">無料相談する</a>
+    </div>
+  </div>
+</section>
+
+<!-- Divider -->
+<div class="divider washi"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
+
+<!-- PROBLEM -->
+<section id="problem">
+  <div class="section-label fade-up">PROBLEM</div>
+  <div class="section-title fade-up">こんな課題、ありませんか？</div>
+  <div class="section-desc fade-up">複数ツールの管理に追われ、本来の業務に集中できない...</div>
+  <div class="problem-grid">
+    <div class="problem-card fade-up">
+      <div class="problem-icon">&#128561;</div>
+      <h3>ツールが多すぎて確認が追いつかない</h3>
+      <p>Slack、Chatwork、Teams、Gmail、LINE WORKS... 1日に何度もツールを切り替え、未読を確認する作業に時間を取られていませんか？</p>
+    </div>
+    <div class="problem-card fade-up">
+      <div class="problem-icon">&#128168;</div>
+      <h3>重要メッセージの見落とし</h3>
+      <p>複数ツールに分散した連絡の中で、顧客やVIPからの重要メッセージを見落としてしまうリスク。対応遅延は信頼に直結します。</p>
+    </div>
+    <div class="problem-card fade-up">
+      <div class="problem-icon">&#9200;</div>
+      <h3>返信の作成に時間がかかる</h3>
+      <p>相手や文脈に応じた適切な返信文を考える時間。特に社外向けメッセージは慎重になり、対応スピードが落ちてしまいます。</p>
+    </div>
+  </div>
+</section>
+
+<!-- Divider -->
+<div class="divider washi"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
+
+<!-- SOLUTION -->
+<section id="solution">
+  <div class="section-label fade-up">SOLUTION</div>
+  <div class="section-title fade-up">オプスチャット で解決</div>
+  <div class="section-desc fade-up">AIが6つのツールを統合。確認・返信・送信をワンストップで。</div>
+  <div class="feature-grid">
+    <div class="feature-card fade-up">
+      <span class="feature-emoji">&#128229;</span>
+      <h3>全ツール未読一括確認</h3>
+      <p>6つのチャットツールの未読メッセージをワンコマンドで一覧表示。緊急度に応じた優先順位表示で、見落としゼロへ。</p>
+    </div>
+    <div class="feature-card fade-up">
+      <span class="feature-emoji">&#128640;</span>
+      <h3>全ツール統合送信</h3>
+      <p>どのツールでも同じ操作でメッセージを送信。ツールを切り替える必要なし。送信前に必ず確認画面を表示。</p>
+    </div>
+    <div class="feature-card fade-up">
+      <span class="feature-emoji">&#129302;</span>
+      <h3>AI自動返信提案</h3>
+      <p>受信メッセージの文脈・相手の属性（社内/社外/VIP）を分析し、最適な返信案を自動生成。ワンクリックで送信。</p>
+    </div>
+    <div class="feature-card fade-up">
+      <span class="feature-emoji">&#9889;</span>
+      <h3>リアルタイム反映</h3>
+      <p>全ツールの新着メッセージを即座に反映。ツールを切り替えなくても、最新の状態が常に一画面で確認できます。</p>
+    </div>
+  </div>
+</section>
+
+<!-- Divider -->
+<div class="divider washi"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
+
+<!-- USE CASES -->
+<section class="hub-uc-section" id="usecases">
+  <div class="hub-uc-inner">
+    <span class="hub-uc-label">USE CASES</span>
+    <h2 class="hub-uc-title">業種・職種別 活用シーン</h2>
+    <p class="hub-uc-subtitle">オプスチャット は、さまざまな業種のチーム課題を解決します。</p>
+
+    <div class="hub-uc-tabs">
+      <button class="hub-uc-tab active" onclick="hubUcSwitch(0, this)">BPO・アウトソーシング</button>
+      <button class="hub-uc-tab" onclick="hubUcSwitch(1, this)">営業チーム</button>
+      <button class="hub-uc-tab" onclick="hubUcSwitch(2, this)">カスタマーサポート</button>
+    </div>
+
+    <!-- BPO -->
+    <div class="hub-uc-content active" id="hubUc0">
+      <div class="hub-uc-card">
+        <div class="hub-uc-card-header">
+          <div class="hub-uc-card-icon">&#127970;</div>
+          <div>
+            <h3 class="hub-uc-card-title">BPO・アウトソーシング企業</h3>
+            <span class="hub-uc-card-role">オペレーションマネージャー / チームリーダー向け</span>
+          </div>
+        </div>
+        <p class="hub-uc-card-desc">
+          クライアントごとに異なるチャットツールを使い分ける必要があるBPO企業。スタッフは1日に何度もツールを切り替え、確認漏れや対応遅延のリスクを抱えています。オプスチャット で全クライアントの連絡を一元管理し、対応品質とスピードを両立します。
+        </p>
+        <div class="hub-uc-ba">
+          <div class="hub-uc-ba-item hub-uc-ba-before">
+            <div class="hub-uc-ba-label">Before</div>
+            <ul class="hub-uc-ba-list">
+              <li>クライアントA→Chatwork、B→Slack、C→Teamsと個別管理</li>
+              <li>スタッフが未読を見落とし、クレームに発展</li>
+              <li>返信文の品質がスタッフごとにバラつく</li>
+            </ul>
+          </div>
+          <div class="hub-uc-ba-item hub-uc-ba-after">
+            <div class="hub-uc-ba-label">After</div>
+            <ul class="hub-uc-ba-list">
+              <li>全クライアントの連絡を1画面で確認</li>
+              <li>VIP自動検出で重要メッセージを見落とさない</li>
+              <li>AI返信でスタッフ間の品質を統一</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 営業 -->
+    <div class="hub-uc-content" id="hubUc1">
+      <div class="hub-uc-card">
+        <div class="hub-uc-card-header">
+          <div class="hub-uc-card-icon">&#128188;</div>
+          <div>
+            <h3 class="hub-uc-card-title">営業チーム</h3>
+            <span class="hub-uc-card-role">営業マネージャー / インサイドセールス向け</span>
+          </div>
+        </div>
+        <p class="hub-uc-card-desc">
+          見込み客や既存顧客とのやり取りが複数ツールに分散し、フォローアップの抜け漏れが発生しがちな営業チーム。オプスチャット で全チャネルを統合し、商談機会を逃しません。
+        </p>
+        <div class="hub-uc-ba">
+          <div class="hub-uc-ba-item hub-uc-ba-before">
+            <div class="hub-uc-ba-label">Before</div>
+            <ul class="hub-uc-ba-list">
+              <li>顧客の返信に気づかず、商談が流れる</li>
+              <li>ツール切替のたびに集中力が途切れる</li>
+              <li>外出先で複数アプリを行き来するストレス</li>
+            </ul>
+          </div>
+          <div class="hub-uc-ba-item hub-uc-ba-after">
+            <div class="hub-uc-ba-label">After</div>
+            <ul class="hub-uc-ba-list">
+              <li>全チャネルの新着を即座に把握</li>
+              <li>AI返信で移動中でも即レスが可能</li>
+              <li>スマホ対応で外出先でも快適に操作</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CS -->
+    <div class="hub-uc-content" id="hubUc2">
+      <div class="hub-uc-card">
+        <div class="hub-uc-card-header">
+          <div class="hub-uc-card-icon">&#127897;</div>
+          <div>
+            <h3 class="hub-uc-card-title">カスタマーサポート</h3>
+            <span class="hub-uc-card-role">CS責任者 / サポートチーム向け</span>
+          </div>
+        </div>
+        <p class="hub-uc-card-desc">
+          ユーザーからの問い合わせがメール・チャット・SNSと複数経路から届くサポートチーム。対応漏れや二重対応を防ぎつつ、迅速で丁寧な対応を実現します。
+        </p>
+        <div class="hub-uc-ba">
+          <div class="hub-uc-ba-item hub-uc-ba-before">
+            <div class="hub-uc-ba-label">Before</div>
+            <ul class="hub-uc-ba-list">
+              <li>問い合わせ経路が多く、対応漏れが発生</li>
+              <li>同じ顧客に複数人が返信してしまう</li>
+              <li>定型返信のコピペに毎回時間がかかる</li>
+            </ul>
+          </div>
+          <div class="hub-uc-ba-item hub-uc-ba-after">
+            <div class="hub-uc-ba-label">After</div>
+            <ul class="hub-uc-ba-list">
+              <li>全チャネルの問い合わせを一元的に管理</li>
+              <li>リアルタイム監視で対応漏れゼロ</li>
+              <li>AIが文脈に応じた返信案を即座に生成</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Divider -->
+<div class="divider washi"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
+
+<!-- DEMO (Interactive 4-Column) -->
+<section id="demo">
+  <div class="section-label fade-up" style="text-align:center;">PRODUCT UI</div>
+  <div class="section-title fade-up" style="text-align:center;">統合メッセージング画面</div>
+  <div class="section-desc fade-up" style="text-align:center;margin:0 auto 48px;">6つのツールを1画面で操作。チャネルを選択し、AIによる返信提案と送信の流れを体験できます。</div>
+
+  <div class="hub-demo fade-up" id="hubDemo">
+    <div class="hub-header">
+      <div class="hub-header-left">
+        <div class="hub-status-dot"></div>
+        <span class="hub-header-title">オプスチャット</span>
+      </div>
+      <span class="hub-demo-badge">INTERACTIVE DEMO</span>
+    </div>
+    <div class="hub-main">
+      <!-- Menu Bar -->
+      <div class="hub-menubar" id="hubMenu"></div>
+      <!-- Sidebar -->
+      <div class="hub-sidebar" id="hubSidebar"></div>
+      <!-- Center: Thread List -->
+      <div class="hub-center" id="hubCenter">
+        <div class="hub-ctr-ph">&#9664; チャネルを選択してください</div>
+      </div>
+      <!-- Right: Conversation -->
+      <div class="hub-right" id="hubRight">
+        <div class="hub-rt-ph">スレッドを選択してください</div>
+      </div>
+    </div>
+    <div class="hub-footer">
+      <span class="hub-footer-status">&#9679; AI接続中 | 6ツール監視中</span>
+      <span class="hub-footer-brand">Powered by オプスチャット</span>
+    </div>
+  </div>
+</section>
+
+<!-- Divider -->
+<div class="divider washi"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
+
+<!-- HOW IT WORKS -->
+<section id="flow">
+  <div class="section-label fade-up" style="text-align:center;">HOW IT WORKS</div>
+  <div class="section-title fade-up" style="text-align:center;">3ステップで完結</div>
+  <div class="section-desc fade-up" style="text-align:center;margin:0 auto 48px;">導入もオペレーションもシンプル。</div>
+  <div class="flow-steps fade-up">
+    <div class="flow-step">
+      <div class="flow-step-num">1</div>
+      <h4>未読を確認</h4>
+      <p>全ツールの未読メッセージを<br>一覧で確認</p>
+    </div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-step">
+      <div class="flow-step-num">2</div>
+      <h4>AIが返信案を提案</h4>
+      <p>相手・文脈に応じた<br>返信案を自動生成</p>
+    </div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-step">
+      <div class="flow-step-num">3</div>
+      <h4>確認して送信</h4>
+      <p>内容を確認し<br>ワンクリックで送信</p>
+    </div>
+  </div>
+</section>
+
+<!-- Divider -->
+<div class="divider washi"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
+
+<!-- ARCHITECTURE -->
+<section id="architecture" class="arch-section">
+  <div class="section-label fade-up">ARCHITECTURE</div>
+  <div class="section-title fade-up">システム構成</div>
+  <div class="section-desc fade-up" style="margin:0 auto 48px;">API連携とブラウザ操作を組み合わせ、あらゆるツールに対応。</div>
+  <div class="arch-diagram fade-up">
+    <div class="arch-layer">
+      <div class="arch-row">
+        <div class="arch-box ai">&#129302; オプスチャット（AIエンジン）</div>
+      </div>
+      <div class="arch-label">&#8595; API / ブラウザ自動操作 &#8595;</div>
+      <div class="arch-row">
+        <div class="arch-box tool slack">Slack<br><small style="font-size:9px;opacity:0.6">API</small></div>
+        <div class="arch-box tool gmail">Gmail<br><small style="font-size:9px;opacity:0.6">API</small></div>
+        <div class="arch-box tool chatwork">Chatwork<br><small style="font-size:9px;opacity:0.6">API/Web</small></div>
+        <div class="arch-box tool teams">Teams<br><small style="font-size:9px;opacity:0.6">API/Web</small></div>
+        <div class="arch-box tool lineworks">LINE WORKS<br><small style="font-size:9px;opacity:0.6">API/Web</small></div>
+        <div class="arch-box tool messenger">Messenger<br><small style="font-size:9px;opacity:0.6">Web</small></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Divider -->
+<div class="divider washi"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
+
+<!-- SECURITY -->
+<section class="hub-sec-section" id="security">
+  <div class="hub-sec-inner">
+    <span class="hub-sec-label">SECURITY</span>
+    <h2 class="hub-sec-title">安心のセキュリティ設計</h2>
+    <p class="hub-sec-subtitle">
+      お客様のデータを守るため、厳格なセキュリティ基準で設計・運用しています。
+    </p>
+
+    <div class="hub-sec-grid">
+      <div class="hub-sec-card">
+        <div class="hub-sec-card-icon">
+          <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <h3 class="hub-sec-card-title">OAuth認証によるAPI連携</h3>
+        <p class="hub-sec-card-text">
+          各チャットツールとはOAuth 2.0で安全に接続。パスワードをお預かりすることは一切ありません。接続権限はいつでも取り消し可能です。
+        </p>
+      </div>
+
+      <div class="hub-sec-card">
+        <div class="hub-sec-card-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <h3 class="hub-sec-card-title">データ非保持ポリシー</h3>
+        <p class="hub-sec-card-text">
+          メッセージ内容をサーバーに保存しません。表示・送信時のみ一時的に処理し、処理完了後は即時破棄。情報漏洩リスクを最小化しています。
+        </p>
+      </div>
+
+      <div class="hub-sec-card">
+        <div class="hub-sec-card-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        </div>
+        <h3 class="hub-sec-card-title">通信の完全暗号化</h3>
+        <p class="hub-sec-card-text">
+          すべての通信はTLS 1.3で暗号化。ツール間のデータ中継を含め、平文での通信は一切発生しません。第三者による傍受を防止します。
+        </p>
+      </div>
+
+      <div class="hub-sec-card">
+        <div class="hub-sec-card-icon">
+          <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h3 class="hub-sec-card-title">アクセス制御</h3>
+        <p class="hub-sec-card-text">
+          管理者による利用者の権限設定が可能。誰がどのツールに接続できるかを細かくコントロールでき、組織のセキュリティポリシーに準拠した運用を実現します。
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Divider -->
+<div class="divider washi"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
+
+<!-- FAQ -->
+<section class="hub-faq-section" id="faq">
+  <div class="hub-faq-inner">
+    <span class="hub-faq-label">FAQ</span>
+    <h2 class="hub-faq-title">よくあるご質問</h2>
+    <p class="hub-faq-subtitle">
+      導入を検討中のお客様からいただくご質問をまとめました。
+    </p>
+
+    <div class="hub-faq-list" id="hubFaqList">
+
+      <div class="hub-faq-item">
+        <button class="hub-faq-q" onclick="hubToggleFaq(this)">
+          <span class="hub-faq-q-badge">Q1</span>
+          <span class="hub-faq-q-text">指定のチャットツールの全グループに一斉メッセージ送信できますか？</span>
+          <svg class="hub-faq-q-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+        </button>
+        <div class="hub-faq-a">
+          <div class="hub-faq-a-inner">
+            <strong>はい、可能です。</strong>例えばChatworkの全ルームや、Slackの複数チャンネルに対して、同一メッセージを一括送信できます。送信先はリストから選択でき、送信前に必ず確認画面が表示されるため、誤送信を防止できます。
+          </div>
+        </div>
+      </div>
+
+      <div class="hub-faq-item">
+        <button class="hub-faq-q" onclick="hubToggleFaq(this)">
+          <span class="hub-faq-q-badge">Q2</span>
+          <span class="hub-faq-q-text">チャットツールを横断してメッセージを同時送信できますか？</span>
+          <svg class="hub-faq-q-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+        </button>
+        <div class="hub-faq-a">
+          <div class="hub-faq-a-inner">
+            <strong>はい、対応しています。</strong>例えばSlackとChatworkに同じ内容を同時送信できます。ツールごとにフォーマットを自動調整するため、各プラットフォームに最適な形で届きます。
+          </div>
+        </div>
+      </div>
+
+      <div class="hub-faq-item">
+        <button class="hub-faq-q" onclick="hubToggleFaq(this)">
+          <span class="hub-faq-q-badge">Q3</span>
+          <span class="hub-faq-q-text">既存のチャットツールの契約や設定を変更する必要はありますか？</span>
+          <svg class="hub-faq-q-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+        </button>
+        <div class="hub-faq-a">
+          <div class="hub-faq-a-inner">
+            <strong>いいえ、変更不要です。</strong>既存環境はそのままで導入できます。各ツールのAPIまたはブラウザ連携で接続するため、管理者設定の変更は必要ありません。
+          </div>
+        </div>
+      </div>
+
+      <div class="hub-faq-item">
+        <button class="hub-faq-q" onclick="hubToggleFaq(this)">
+          <span class="hub-faq-q-badge">Q4</span>
+          <span class="hub-faq-q-text">AI返信の内容は自動で送信されますか？</span>
+          <svg class="hub-faq-q-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+        </button>
+        <div class="hub-faq-a">
+          <div class="hub-faq-a-inner">
+            <strong>いいえ、自動送信はしません。</strong>AIが返信案を提案し、必ず人が内容を確認・編集してから送信する仕組みです。返信文は自由に書き換え可能で、AIの提案はあくまで下書きとしてご利用いただけます。
+          </div>
+        </div>
+      </div>
+
+      <div class="hub-faq-item">
+        <button class="hub-faq-q" onclick="hubToggleFaq(this)">
+          <span class="hub-faq-q-badge">Q5</span>
+          <span class="hub-faq-q-text">導入にどのくらい時間がかかりますか？</span>
+          <svg class="hub-faq-q-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+        </button>
+        <div class="hub-faq-a">
+          <div class="hub-faq-a-inner">
+            <strong>最短で即日利用開始できます。</strong>各ツールのアカウント連携（OAuth認証）を行うだけで準備完了です。専用ソフトのインストールや複雑な初期設定は必要ありません。
+          </div>
+        </div>
+      </div>
+
+      <div class="hub-faq-item">
+        <button class="hub-faq-q" onclick="hubToggleFaq(this)">
+          <span class="hub-faq-q-badge">Q6</span>
+          <span class="hub-faq-q-text">対応しているツールを追加できますか？</span>
+          <svg class="hub-faq-q-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+        </button>
+        <div class="hub-faq-a">
+          <div class="hub-faq-a-inner">
+            現在はSlack・Gmail・Chatwork・Teams・LINE WORKS・Messengerの<strong>6ツールに対応</strong>しています。その他のツールについてもご要望に応じて対応を検討いたします。お気軽にご相談ください。
+          </div>
+        </div>
+      </div>
+
+      <div class="hub-faq-item">
+        <button class="hub-faq-q" onclick="hubToggleFaq(this)">
+          <span class="hub-faq-q-badge">Q7</span>
+          <span class="hub-faq-q-text">セキュリティ面は大丈夫ですか？データはどう管理されていますか？</span>
+          <svg class="hub-faq-q-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+        </button>
+        <div class="hub-faq-a">
+          <div class="hub-faq-a-inner">
+            <strong>万全の体制で運用しています。</strong>OAuth 2.0による安全な認証、TLS 1.3による通信暗号化、データ非保持ポリシーを採用。当社はISMS（ISO/IEC 27001）認証取得企業であり、国際基準に準拠した情報セキュリティ管理を徹底しています。
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Divider -->
+<div class="divider washi"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
+
+<!-- COMPARISON -->
+<section id="compare">
+  <div class="section-label fade-up">COMPARISON</div>
+  <div class="section-title fade-up">従来 vs オプスチャット</div>
+  <div class="section-desc fade-up">ツール切り替えの手間を一気に解消。</div>
+  <div class="fade-up" style="overflow-x:auto;">
+    <table class="compare-table">
+      <thead>
+        <tr><th>項目</th><th>従来の運用</th><th>オプスチャット</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>未読確認</td><td class="cross">6つのツールを個別に開いて確認</td><td class="check">ワンコマンドで全ツール一括確認</td></tr>
+        <tr><td>メッセージ送信</td><td class="cross">各ツールにログインして個別送信</td><td class="check">1つの画面からどのツールにも送信</td></tr>
+        <tr><td>返信作成</td><td class="cross">手動で文面を考えて入力</td><td class="check">AIが文脈に合った返信案を自動生成</td></tr>
+        <tr><td>見落とし防止</td><td class="cross">各ツールの通知に依存</td><td class="check">リアルタイム監視＋緊急度判定</td></tr>
+        <tr><td>対応スピード</td><td class="cross">ツール切替に平均30秒〜1分</td><td class="check">即座に確認・返信（数秒）</td></tr>
+        <tr><td>VIP対応</td><td class="cross">重要な相手も通常通知と同列</td><td class="check">VIP自動検出＋優先表示</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- Divider -->
+<div class="divider washi"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
+
+<!-- ROI SIMULATOR -->
+<section class="hub-sim-section" id="simulator">
+  <div class="hub-sim-inner">
+    <span class="hub-sim-label">SIMULATOR</span>
+    <h2 class="hub-sim-title">導入効果シミュレーター</h2>
+    <p class="hub-sim-subtitle">
+      貴社の環境に合わせて、オプスチャット 導入による削減効果を試算できます。
+    </p>
+
+    <div class="hub-sim-card">
+      <div class="hub-sim-slider-group">
+        <div class="hub-sim-slider-label">
+          <span class="hub-sim-slider-text">利用中のチャットツール数</span>
+          <span class="hub-sim-slider-value" id="simToolsVal">4</span>
+        </div>
+        <input type="range" class="hub-sim-range" min="2" max="6" value="4" step="1" id="simTools">
+      </div>
+
+      <div class="hub-sim-slider-group">
+        <div class="hub-sim-slider-label">
+          <span class="hub-sim-slider-text">1日のツール切り替え回数（1人あたり）</span>
+          <span class="hub-sim-slider-value" id="simSwitchVal">12回</span>
+        </div>
+        <input type="range" class="hub-sim-range" min="5" max="30" value="12" step="1" id="simSwitch">
+      </div>
+
+      <div class="hub-sim-slider-group">
+        <div class="hub-sim-slider-label">
+          <span class="hub-sim-slider-text">チームの人数</span>
+          <span class="hub-sim-slider-value" id="simMemVal">8名</span>
+        </div>
+        <input type="range" class="hub-sim-range" min="1" max="50" value="8" step="1" id="simMem">
+      </div>
+
+      <div class="hub-sim-slider-group">
+        <div class="hub-sim-slider-label">
+          <span class="hub-sim-slider-text">平均時給（円）</span>
+          <span class="hub-sim-slider-value" id="simWageVal">2,500円</span>
+        </div>
+        <input type="range" class="hub-sim-range" min="1500" max="5000" value="2500" step="100" id="simWage">
+      </div>
+
+      <div class="hub-sim-results">
+        <div class="hub-sim-results-grid">
+          <div class="hub-sim-result-box">
+            <div class="hub-sim-result-label">年間削減時間</div>
+            <div class="hub-sim-result-value blue" id="simResHours">576時間</div>
+          </div>
+          <div class="hub-sim-result-box">
+            <div class="hub-sim-result-label">年間コスト削減</div>
+            <div class="hub-sim-result-value green" id="simResCost">144万円</div>
+          </div>
+        </div>
+        <div class="hub-sim-result-sub">
+          <div class="hub-sim-result-label">1人あたり月間削減</div>
+          <div class="hub-sim-result-value" id="simResPerson">6.0 時間/月</div>
+        </div>
+        <p class="hub-sim-note">
+          ※ 1回の切り替えに30秒、AI返信で返信作成時間を50%短縮と想定した試算です。<br>
+          実際の効果は業務内容・運用方法により異なります。
+        </p>
+      </div>
+
+      <div class="hub-sim-cta">
+        <a href="https://www.portament.jp/contact" target="_blank" rel="noopener noreferrer" class="hub-sim-cta-btn">
+          この削減効果について相談する <span style="font-size:14px;">&#8594;</span>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- CTA Banner -->
+<section class="hub-cta-banner">
+  <h2 class="hub-cta-banner-title">コミュニケーションを、<br>もっとスマートに。</h2>
+  <p class="hub-cta-banner-sub">オプスチャット の導入について、お気軽にご相談ください。</p>
+  <a href="https://www.portament.jp/contact" target="_blank" rel="noopener noreferrer" class="hub-cta-banner-btn">
+    無料相談する <span style="font-size:16px;">&#8594;</span>
+  </a>
+</section>
+
+<!-- FOOTER -->
+<footer class="washi">
+  <div class="footer-logos">
+    <img src="img/portament-logo.jpg" alt="PORTAMENT Inc." />
+    <img src="img/opsguide-logo.jpg" alt="OpsGuide" />
+    <img src="img/isms-logo.png" alt="ISMS認証" />
+  </div>
+  <p>&copy; 2026 オプスチャット by PORTAMENT Inc. All rights reserved.</p>
+</footer>
+
+<script>
+  // ===== Use Case Tab Switch =====
+  window.hubUcSwitch = function(idx, btn) {
+    var tabs = document.querySelectorAll('.hub-uc-tab');
+    for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+    btn.classList.add('active');
+    var contents = document.querySelectorAll('.hub-uc-content');
+    for (var i = 0; i < contents.length; i++) contents[i].classList.remove('active');
+    var target = document.getElementById('hubUc' + idx);
+    if (target) target.classList.add('active');
+  };
+
+  // ===== ROI Simulator =====
+  (function() {
+    function simCalc() {
+      var tools = +document.getElementById('simTools').value;
+      var switches = +document.getElementById('simSwitch').value;
+      var members = +document.getElementById('simMem').value;
+      var wage = +document.getElementById('simWage').value;
+      document.getElementById('simToolsVal').textContent = tools;
+      document.getElementById('simSwitchVal').textContent = switches + '回';
+      document.getElementById('simMemVal').textContent = members + '名';
+      document.getElementById('simWageVal').textContent = wage.toLocaleString() + '円';
+      var switchMinPerDay = switches * 0.5;
+      var replyMinPerDay = switches * 1.5 * 0.5;
+      var totalMinPerDayPerPerson = switchMinPerDay + replyMinPerDay;
+      var workDays = 245;
+      var hoursPerYear = Math.round(totalMinPerDayPerPerson * members * workDays / 60);
+      var costPerYear = Math.round(hoursPerYear * wage);
+      var perPersonPerMonth = (totalMinPerDayPerPerson * workDays / 60 / 12).toFixed(1);
+      document.getElementById('simResHours').textContent = hoursPerYear.toLocaleString() + '時間';
+      if (costPerYear >= 10000) {
+        document.getElementById('simResCost').textContent = Math.round(costPerYear / 10000).toLocaleString() + '万円';
+      } else {
+        document.getElementById('simResCost').textContent = costPerYear.toLocaleString() + '円';
+      }
+      document.getElementById('simResPerson').textContent = perPersonPerMonth + ' 時間/月';
+    }
+    document.getElementById('simTools').addEventListener('input', simCalc);
+    document.getElementById('simSwitch').addEventListener('input', simCalc);
+    document.getElementById('simMem').addEventListener('input', simCalc);
+    document.getElementById('simWage').addEventListener('input', simCalc);
+    simCalc();
+  })();
+
+  // ===== Interactive Demo - 4 Column UI =====
+  (function() {
+    'use strict';
+    var E = function(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; };
+    var timers = [], typing = false, editMode = false;
+    function cl() { for (var i = 0; i < timers.length; i++) clearTimeout(timers[i]); timers = []; typing = false; }
+
+    // === Data Model ===
+    var tools = {
+      slack: { name:'Slack', ico:'S', col:'#e01e5a', hasWs:true,
+        workspaces: [
+          { name:'ノヴァテック', self:'加藤 徹', cats:[
+            { name:'プロジェクト', chs:[
+              { id:'s1', name:'企画会議', ico:'#', unread:3, threads:[
+                { id:'s1t1', from:'田村 優子', ini:'田', col:'#7c3aed', time:'10:32', preview:'デザイン案のFBお願いします', replies:3, people:2,
+                  steps:[
+                    {type:'them',who:'田村 優子',text:'デザイン案のFBお願いします。添付ファイルを確認ください。'},
+                    {type:'ai',text:'田村さん\n\n確認しました。全体的にいい方向だと思います。\n2点コメント入れておきましたのでご確認ください。'},
+                    {type:'them',who:'田村 優子',text:'ありがとうございます。修正版を夕方までに送りますね。'},
+                    {type:'ai',text:'承知しました。修正版お待ちしております。\n何かあればお気軽にどうぞ。'}
+                  ]},
+                { id:'s1t2', from:'松本 健太', ini:'松', col:'#0891b2', time:'09:15', preview:'来週のスケジュール確認', replies:1, people:1,
+                  steps:[
+                    {type:'them',who:'松本 健太',text:'来週のスケジュール確認させてください。水曜のレビュー会は予定通りですか？'},
+                    {type:'ai',text:'松本さん\n\n水曜のレビュー会は予定通り14:00〜です。\nアジェンダは前日までに共有しますね。'}
+                  ]}
+              ]},
+              { id:'s2', name:'デザイン', ico:'#', unread:0, threads:[
+                { id:'s2t1', from:'川島 あかり', ini:'川', col:'#059669', time:'昨日', preview:'ロゴの修正案を添付しました', replies:2, people:2, steps:[
+                    {type:'them',who:'川島 あかり',text:'ロゴの修正案を添付しました。ご確認よろしくお願いします。'},
+                    {type:'ai',text:'川島さん\n\n拝見しました。方向性としてはB案が良いと思います。\n色味をもう少し落ち着かせた版も見たいです。'}
+                ]}
+              ]}
+            ]},
+            { name:'営業', chs:[
+              { id:'s3', name:'営業チーム', ico:'#', unread:1, threads:[
+                { id:'s3t1', from:'高橋 翔', ini:'高', col:'#dc2626', time:'11:20', preview:'新規リードの情報共有です', replies:2, people:2,
+                  steps:[
+                    {type:'them',who:'高橋 翔',text:'新規リードの情報共有です。アオバ物産の中村部長から問い合わせがありました。'},
+                    {type:'ai',text:'高橋さん\n\n情報ありがとうございます。\nアオバ物産様、来週中にアポイントを打診してみます。\n提案資料の準備も進めておきますね。'}
+                ]}
+              ]}
+            ]}
+          ]},
+          { name:'サクラシステム様', self:'Toru Kato', cats:[
+            { name:'業務', chs:[
+              { id:'s4', name:'納品管理', ico:'\uD83D\uDCAC', unread:2, threads:[
+                { id:'s4t1', from:'吉川 美穂', ini:'吉', col:'#e11d48', time:'14:20', preview:'来週の納品物ですが、進捗いかがですか？', replies:3, people:2,
+                  steps:[
+                    {type:'them',who:'吉川 美穂',text:'来週の納品物ですが、進捗いかがですか？クライアントから確認が来ています。'},
+                    {type:'ai',text:'吉川様\n\n順調に進んでおります。\n金曜日までに初稿をお送りします。\n現在85%の進捗です。'},
+                    {type:'them',who:'吉川 美穂',text:'承知しました。よろしくお願いします。品質チェックの時間も見込んでいただけると助かります。'},
+                    {type:'ai',text:'吉川様\n\nかしこまりました。\n木曜日中に初稿をお送りし、金曜日を品質チェックの時間として確保いたします。\nご安心ください。'}
+                  ]},
+                { id:'s4t2', from:'吉川 美穂', ini:'吉', col:'#e11d48', time:'昨日', preview:'請求書のフォーマット確認', replies:1, people:1, steps:[
+                    {type:'them',who:'吉川 美穂',text:'請求書のフォーマットですが、先月と同じ形式でよろしいでしょうか？'},
+                    {type:'ai',text:'吉川様\n\nはい、先月と同じフォーマットで問題ございません。\n月末までにお送りいたします。'}
+                ]}
+              ]},
+              { id:'s5', name:'請求関連', ico:'\uD83D\uDCAC', unread:0, threads:[] }
+            ]}
+          ]},
+          { name:'フジモリ商事様', self:'加藤（ノヴァテック）', cats:[
+            { name:'共有', chs:[
+              { id:'s6', name:'共有チャネル', ico:'#', unread:1, threads:[
+                { id:'s6t1', from:'渡辺 拓', ini:'渡', col:'#7c3aed', time:'16:00', preview:'契約更新の件でご相談', replies:2, people:2, steps:[
+                    {type:'them',who:'渡辺 拓',text:'契約更新の件でご相談です。来期の内容について、来週お打ち合わせ可能でしょうか？'},
+                    {type:'ai',text:'渡辺様\n\nご連絡ありがとうございます。\n来週でしたら火曜・木曜の午後が空いております。\nご都合いかがでしょうか。'}
+                ]}
+              ]}
+            ]}
+          ]}
+        ]
+      },
+      gmail: { name:'Gmail', ico:'G', col:'#ea4335', hasWs:false,
+        channels: [
+          { id:'g1', name:'山田商事 様', ico:'\u2709', unread:2, threads:[
+            { id:'g1t1', from:'佐藤 リカ', ini:'佐', col:'#dc2626', time:'12分前', preview:'見積書の修正をお願いしたく', replies:3, people:2,
+              steps:[
+                {type:'them',who:'佐藤 リカ（山田商事）',text:'お世話になっております。先日お送りした見積書について、1点修正をお願いしたくご連絡しました。オプションBの月額費用を98,000円に変更いただけますでしょうか。'},
+                {type:'ai',text:'佐藤様\n\nお世話になっております。\nオプションBの月額費用を98,000円（税別）に修正し、本日中に改訂版をお送りいたします。\n\nその他ご不明点がございましたら、お気軽にお申し付けください。'},
+                {type:'them',who:'佐藤 リカ（山田商事）',text:'早速のご対応ありがとうございます。改訂版届き次第、社内稟議に回しますので、よろしくお願いします。'},
+                {type:'ai',text:'佐藤様\n\nかしこまりました。改訂版は本日17時までにお送りいたします。\n稟議に際してご不明点があれば、いつでもご連絡ください。'}
+              ]},
+            { id:'g1t2', from:'佐藤 リカ', ini:'佐', col:'#dc2626', time:'昨日', preview:'打ち合わせ日程の件', replies:1, people:1, steps:[
+                {type:'them',who:'佐藤 リカ（山田商事）',text:'打ち合わせ日程ですが、来週水曜13:00〜はいかがでしょうか？'},
+                {type:'ai',text:'佐藤様\n\n来週水曜13:00〜で承知しました。\nお打ち合わせの場所は弊社会議室でご用意いたします。'}
+            ]}
+          ]},
+          { id:'g2', name:'田中 太郎 様', ico:'\u2709', unread:0, threads:[] }
+        ]
+      },
+      chatwork: { name:'Chatwork', ico:'C', col:'#e2383f', hasWs:false,
+        channels: [
+          { id:'c1', name:'クライアントB社', ico:'\uD83D\uDCAC', unread:1, threads:[
+            { id:'c1t1', from:'鈴木 大輔', ini:'鈴', col:'#0891b2', time:'18分前', preview:'マニュアル改訂版のレビュー完了しました', replies:3, people:2,
+              steps:[
+                {type:'them',who:'鈴木 大輔',text:'マニュアル改訂版のレビュー完了しました。いくつかコメントを入れておいたので確認お願いします。'},
+                {type:'ai',text:'鈴木さん\n\nレビューありがとうございます。\nコメント確認して、本日中に反映します。\n修正が終わったら改めて共有しますね。'},
+                {type:'them',who:'鈴木 大輔',text:'了解です。あと、検索手順のところ、スクショを最新版に差し替えてもらえると助かります。'},
+                {type:'ai',text:'承知しました。スクショも最新のUIに差し替えて反映します。\n明日の午前中にはお見せできると思います。'}
+              ]}
+          ]},
+          { id:'c2', name:'社内報告', ico:'\uD83D\uDCAC', unread:0, threads:[] }
+        ]
+      },
+      teams: { name:'Teams', ico:'T', col:'#5b5fc7', hasWs:true,
+        workspaces: [
+          { name:'ノヴァテック Inc.', self:'加藤 徹', cats:[
+            { name:'営業事務課', chs:[
+              { id:'t1', name:'一般', ico:'\uD83D\uDFE3', unread:0, threads:[] },
+              { id:'t2', name:'顧客登録依頼', ico:'\uD83D\uDFE3', unread:1, threads:[
+                { id:'t2t1', from:'山本 真理', ini:'山', col:'#059669', time:'25分前', preview:'新規顧客の登録をお願いします', replies:2, people:2,
+                  steps:[
+                    {type:'them',who:'山本 真理',text:'新規顧客の登録をお願いします。アオバ物産株式会社、担当：中村部長です。'},
+                    {type:'ai',text:'山本さん\n\n承知しました。アオバ物産様の情報をCRMに登録いたします。\n登録完了次第、共有しますね。'}
+                ]}
+              ]}
+            ]}
+          ]},
+          { name:'アスカ電機様', self:'加藤 徹（外部）', cats:[
+            { name:'プロジェクト共有', chs:[
+              { id:'t3', name:'定例MTG', ico:'\uD83D\uDFE3', unread:0, threads:[
+                { id:'t3t1', from:'藤井 さくら', ini:'藤', col:'#7c3aed', time:'昨日', preview:'来月のキックオフ日程について', replies:2, people:2,
+                  steps:[
+                    {type:'them',who:'藤井 さくら（アスカ電機）',text:'来月のキックオフMTGの日程について相談です。第2週の火曜か水曜で調整可能でしょうか？'},
+                    {type:'ai',text:'藤井様\n\nご連絡ありがとうございます。\n来月第2週、火曜日・水曜日ともに対応可能です。\nご都合の良い日時をお知らせください。'}
+                ]}
+              ]},
+              { id:'t4', name:'ドキュメント共有', ico:'\uD83D\uDFE3', unread:0, threads:[] }
+            ]}
+          ]}
+        ]
+      },
+      lineworks: { name:'LINE WORKS', ico:'L', col:'#00c73c', hasWs:false,
+        channels: [
+          { id:'l1', name:'物流チーム', ico:'\uD83D\uDFE2', unread:2, threads:[
+            { id:'l1t1', from:'小林 誠', ini:'小', col:'#16a34a', time:'45分前', preview:'配送スケジュールの確認です', replies:2, people:2,
+              steps:[
+                {type:'them',who:'小林 誠',text:'配送スケジュールの確認です。来週月曜の大口配送、手配完了していますか？'},
+                {type:'ai',text:'小林さん\n\nご確認ありがとうございます。\n来週月曜の大口配送、手配完了しております。\nトラック2台、朝8時出発で準備済みです。'}
+              ]},
+            { id:'l1t2', from:'中村 愛', ini:'中', col:'#e11d48', time:'1時間前', preview:'在庫確認お願いします', replies:1, people:1, steps:[
+                {type:'them',who:'中村 愛',text:'在庫確認お願いします。A-201の在庫数を教えてください。'},
+                {type:'ai',text:'中村さん\n\nA-201の現在在庫は48個です。\n発注点に近いので、補充の手配も進めておきましょうか？'}
+            ]}
+          ]}
+        ]
+      },
+      messenger: { name:'Messenger', ico:'M', col:'#0084ff', hasWs:false,
+        channels: [
+          { id:'m1', name:'海外パートナー', ico:'\uD83D\uDD35', unread:0, threads:[
+            { id:'m1t1', from:'David Miller', ini:'D', col:'#0084ff', time:'昨日', preview:'Contract renewal discussion', replies:2, people:2,
+              steps:[
+                {type:'them',who:'David Miller',text:'Hi, I would like to discuss the contract renewal for next quarter. Can we schedule a call this week?'},
+                {type:'ai',text:'Hi David,\n\nThank you for reaching out.\nI\'m available Thursday or Friday afternoon (JST).\nWould either of those work for you?'}
+            ]}
+          ]}
+        ]
+      }
+    };
+
+    var favs = ['s1','g1'];
+    var activities = [
+      { type:'mention', tool:'slack', toolCol:'#e01e5a', from:'田村 優子', ch:'# 企画会議', preview:'@加藤 FBお願いします', time:'2分前', thrId:'s1t1', chId:'s1' },
+      { type:'mention', tool:'teams', toolCol:'#5b5fc7', from:'山本 真理', ch:'\uD83D\uDFE3 顧客登録依頼', preview:'@加藤 新規顧客の登録を', time:'25分前', thrId:'t2t1', chId:'t2' },
+      { type:'follow', tool:'chatwork', toolCol:'#e2383f', from:'鈴木 大輔', ch:'\uD83D\uDCAC クライアントB社', preview:'マニュアル改訂版のレビュー完了', time:'18分前', thrId:'c1t1', chId:'c1' },
+      { type:'follow', tool:'gmail', toolCol:'#ea4335', from:'佐藤 リカ', ch:'\u2709 山田商事 様', preview:'見積書の修正をお願いしたく', time:'12分前', thrId:'g1t1', chId:'g1' },
+      { type:'mention', tool:'lineworks', toolCol:'#00c73c', from:'小林 誠', ch:'\uD83D\uDFE2 物流チーム', preview:'@加藤 配送スケジュール確認', time:'45分前', thrId:'l1t1', chId:'l1' }
+    ];
+
+    var curTool = 'all', curView = 'home', curCh = null, curThr = null, round = {};
+
+    function getToolChannels(k) {
+      var t = tools[k], chs = [];
+      if (t.hasWs) { for (var w = 0; w < t.workspaces.length; w++) { var ws = t.workspaces[w]; for (var c = 0; c < ws.cats.length; c++) { for (var ch = 0; ch < ws.cats[c].chs.length; ch++) { chs.push(ws.cats[c].chs[ch]); } } } }
+      else { chs = t.channels; }
+      return chs;
+    }
+    function findCh(id) { for (var k in tools) { var chs = getToolChannels(k); for (var i = 0; i < chs.length; i++) { if (chs[i].id === id) return chs[i]; } } return null; }
+    function findThr(thrId) { for (var k in tools) { var chs = getToolChannels(k); for (var i = 0; i < chs.length; i++) { for (var j = 0; j < chs[i].threads.length; j++) { if (chs[i].threads[j].id === thrId) return chs[i].threads[j]; } } } return null; }
+    function findSelfName(chId) {
+      for (var k in tools) { var t = tools[k];
+        if (t.hasWs) { for (var w = 0; w < t.workspaces.length; w++) { var ws = t.workspaces[w]; for (var c = 0; c < ws.cats.length; c++) { for (var ch = 0; ch < ws.cats[c].chs.length; ch++) { if (ws.cats[c].chs[ch].id === chId) return ws.self; } } } }
+        else { for (var i = 0; i < t.channels.length; i++) { if (t.channels[i].id === chId) return '加藤 徹'; } }
+      } return '加藤 徹';
+    }
+    function totalUnread(toolKey) { var n = 0; if (toolKey === 'all') { for (var k in tools) { var chs = getToolChannels(k); for (var i = 0; i < chs.length; i++) n += chs[i].unread; } } else { var chs = getToolChannels(toolKey); for (var i = 0; i < chs.length; i++) n += chs[i].unread; } return n; }
+
+    function renderMenu() {
+      var h = '';
+      h += '<button class="hub-mi'+(curView==='home'?' active':'')+'" onclick="hubView(\'home\')">🏠<span class="hub-mi-lbl">ホーム</span></button>';
+      h += '<button class="hub-mi'+(curView==='activity'?' active':'')+'" onclick="hubView(\'activity\')">🔔'+(totalUnread('all')>0?'<span class="hub-mi-dot"></span>':'')+'<span class="hub-mi-lbl">通知</span></button>';
+      h += '<div class="hub-mi-sep"></div>';
+      var mi = [{k:'all',l:'ALL',e:'⚡'},{k:'slack',l:'Slack',e:'S'},{k:'gmail',l:'Gmail',e:'G'},{k:'chatwork',l:'CW',e:'C'},{k:'teams',l:'Teams',e:'T'},{k:'lineworks',l:'LW',e:'L'},{k:'messenger',l:'Msg',e:'M'}];
+      for (var i = 0; i < mi.length; i++) {
+        var m = mi[i], a = curTool===m.k&&curView==='home', u = totalUnread(m.k);
+        h += '<button class="hub-mi'+(a?' active':'')+'" onclick="hubTool(\''+m.k+'\')" style="font-size:'+(m.k==='all'?'13px':'12px')+';">'+m.e+(u>0&&m.k!=='all'?'<span class="hub-mi-dot"></span>':'')+'<span class="hub-mi-lbl">'+m.l+'</span></button>';
+      }
+      document.getElementById('hubMenu').innerHTML = h;
+    }
+
+    function renderSidebar() {
+      var sb = document.getElementById('hubSidebar'), h = '';
+      if (curView === 'activity') {
+        h += '<div class="hub-sb-hdr">🔔 アクティビティ</div>';
+        h += '<div class="hub-sb-act-filters"><button class="hub-sb-act-f active">全て</button><button class="hub-sb-act-f">メンション</button><button class="hub-sb-act-f">フォロー中</button></div>';
+        h += '<div class="hub-sb-act">';
+        for (var i = 0; i < activities.length; i++) {
+          var a = activities[i];
+          h += '<div class="hub-sb-act-item" onclick="hubActClick(\''+a.chId+'\',\''+a.thrId+'\')">';
+          h += '<div class="hub-sb-act-hdr"><span class="hub-sb-act-tool" style="background:'+a.toolCol+';color:#fff;">'+a.tool.charAt(0).toUpperCase()+'</span><span class="hub-sb-act-name">'+E(a.from)+'</span></div>';
+          h += '<div class="hub-sb-act-ch">'+E(a.ch)+'</div>';
+          h += '<div class="hub-sb-act-badge" style="background:'+(a.type==='mention'?'#fef3c7;color:#92400e':'#ede9fe;color:#5b21b6')+';">'+(a.type==='mention'?'@ メンション':'🔄 フォロー中')+'</div>';
+          h += '<div class="hub-sb-act-prev">'+E(a.preview)+'</div>';
+          h += '<div class="hub-sb-act-time">'+a.time+'</div></div>';
+        }
+        h += '</div>'; sb.innerHTML = h; return;
+      }
+      var title = curTool === 'all' ? 'オプスチャット' : tools[curTool].name;
+      h += '<div class="hub-sb-hdr">'+title+' <span style="font-size:10px;color:#475569;">🔍</span></div>';
+      if (curTool === 'all') {
+        h += '<div class="hub-sb-fav"><div class="hub-sb-fav-t">⭐ お気に入り</div>';
+        for (var i = 0; i < favs.length; i++) { var ch = findCh(favs[i]); if (!ch) continue;
+          h += '<div class="hub-sb-ch hub-sb-ch-l1'+(curCh===ch.id?' active':'')+(ch.unread>0?' hub-sb-ch-unread':'')+'" onclick="hubChClick(\''+ch.id+'\')"><span class="hub-sb-ch-ico">'+ch.ico+'</span><span class="hub-sb-ch-nm">'+E(ch.name)+'</span>'+(ch.unread>0?'<span class="hub-sb-ch-bd">'+ch.unread+'</span>':'')+'</div>';
+        }
+        h += '</div>';
+        for (var k in tools) { h += renderToolSec(k); }
+      } else { h += renderToolSec(curTool, true); }
+      sb.innerHTML = h;
+    }
+
+    function renderToolSec(k, expanded) {
+      var t = tools[k], h = '', u = totalUnread(k);
+      if (curTool === 'all') { h += '<div class="hub-sb-sec"><div class="hub-sb-sec-t" onclick="this.parentElement.classList.toggle(\'closed\')"><span class="hub-sb-sec-arr">▼</span> '+E(t.name)+(u>0?' <span class="hub-sb-ch-bd">'+u+'</span>':'')+'</div><div class="hub-sb-sec-bd">'; }
+      if (t.hasWs) {
+        for (var w = 0; w < t.workspaces.length; w++) { var ws = t.workspaces[w];
+          h += '<div class="hub-sb-ws">▾ '+E(ws.name)+'</div><div class="hub-sb-self">自分: '+E(ws.self)+'</div>';
+          for (var c = 0; c < ws.cats.length; c++) { h += '<div class="hub-sb-cat">▸ '+E(ws.cats[c].name)+'</div>';
+            for (var ch = 0; ch < ws.cats[c].chs.length; ch++) { var item = ws.cats[c].chs[ch];
+              h += '<div class="hub-sb-ch'+(curCh===item.id?' active':'')+(item.unread>0?' hub-sb-ch-unread':'')+'" onclick="hubChClick(\''+item.id+'\')"><span class="hub-sb-ch-ico">'+item.ico+'</span><span class="hub-sb-ch-nm">'+E(item.name)+'</span>'+(item.unread>0?'<span class="hub-sb-ch-bd">'+item.unread+'</span>':'')+'</div>';
+            }
+          }
+        }
+      } else {
+        for (var i = 0; i < t.channels.length; i++) { var item = t.channels[i];
+          h += '<div class="hub-sb-ch hub-sb-ch-l1'+(curCh===item.id?' active':'')+(item.unread>0?' hub-sb-ch-unread':'')+'" onclick="hubChClick(\''+item.id+'\')"><span class="hub-sb-ch-ico">'+item.ico+'</span><span class="hub-sb-ch-nm">'+E(item.name)+'</span>'+(item.unread>0?'<span class="hub-sb-ch-bd">'+item.unread+'</span>':'')+'</div>';
+        }
+      }
+      if (curTool === 'all') { h += '</div></div>'; }
+      return h;
+    }
+
+    function renderCenter() {
+      var ctr = document.getElementById('hubCenter');
+      if (!curCh) { ctr.innerHTML = '<div class="hub-ctr-ph">\u25C0 チャネルを選択してください</div>'; return; }
+      var ch = findCh(curCh);
+      if (!ch) { ctr.innerHTML = '<div class="hub-ctr-ph">チャネルが見つかりません</div>'; return; }
+      var h = '<div class="hub-ctr-hdr">'+ch.ico+' '+E(ch.name)+'</div>';
+      if (ch.threads.length === 0) { h += '<div class="hub-ctr-ph">スレッドはありません</div>'; }
+      else { for (var i = 0; i < ch.threads.length; i++) { var t = ch.threads[i];
+        h += '<div class="hub-thr'+(curThr===t.id?' active':'')+'" onclick="hubThrClick(\''+t.id+'\')"><div class="hub-thr-row"><div class="hub-thr-av" style="background:'+t.col+'">'+E(t.ini)+'</div><div class="hub-thr-meta"><div class="hub-thr-top"><span class="hub-thr-name">'+E(t.from)+'</span><span class="hub-thr-time">'+t.time+'</span></div><div class="hub-thr-prev">'+E(t.preview)+'</div><div class="hub-thr-stats">\uD83D\uDCAC'+t.replies+' \uD83D\uDC64'+t.people+'</div></div></div></div>';
+      }}
+      ctr.innerHTML = h;
+    }
+
+    function renderRight() {
+      var rt = document.getElementById('hubRight');
+      if (!curThr) { rt.innerHTML = '<div class="hub-rt-ph">スレッドを選択してください</div>'; return; }
+      var thr = findThr(curThr);
+      if (!thr) { rt.innerHTML = '<div class="hub-rt-ph">スレッドが見つかりません</div>'; return; }
+      var selfName = findSelfName(curCh);
+      var h = '<div class="hub-rt-hdr"><div class="hub-rt-title">'+E(thr.from)+'</div><div class="hub-rt-sub">'+E(thr.preview)+'</div><div class="hub-rt-sender">返信: '+E(selfName)+' として送信</div></div>';
+      h += '<div class="hub-rt-chat" id="hubChat"></div>';
+      rt.innerHTML = h;
+      buildChat(curThr, selfName);
+    }
+
+    function buildChat(thrId, selfName) {
+      var thr = findThr(thrId), chat = document.getElementById('hubChat');
+      if (!chat || !thr) return;
+      chat.innerHTML = '';
+      var r = round[thrId] || 0, mp = Math.floor(thr.steps.length / 2);
+      for (var p = 0; p < r && p < mp; p++) { chat.innerHTML += themBub(thr.steps[p*2], thr); chat.innerHTML += sentAiBub(thr.steps[p*2+1].text, selfName); }
+      if (r < mp) { chat.innerHTML += themBub(thr.steps[r*2], thr); chat.scrollTop = chat.scrollHeight; startTyping(thrId, thr.steps[r*2+1].text, selfName); }
+      else { chat.innerHTML += '<div class="hub-complete"><div class="hub-complete-inner"><span class="hub-complete-icon">\u2713</span><span class="hub-complete-title">会話完了</span><span class="hub-complete-sub">全てのメッセージに対応しました</span></div></div>'; chat.scrollTop = chat.scrollHeight; }
+    }
+
+    function themBub(step, thr) {
+      return '<div class="hub-bub-them"><div class="hub-bub-them-av" style="background:'+thr.col+'">'+E(thr.ini)+'</div><div class="hub-bub-them-ct"><div class="hub-bub-them-nm">'+E(step.who||thr.from)+'</div><div class="hub-bub-them-text">'+E(step.text)+'</div></div></div>';
+    }
+    function sentAiBub(text, selfName) {
+      return '<div class="hub-bub-ai-wrap"><div class="hub-bub-ai-label"><div class="hub-bub-ai-dot"></div><span class="hub-bub-ai-tag">AI返信 ('+E(selfName)+')</span><span class="hub-bub-ai-sent">\u2713 送信済み</span></div><div class="hub-bub-ai-text sent">'+E(text)+'</div></div>';
+    }
+
+    function startTyping(thrId, fullText, selfName) {
+      typing = true; editMode = false;
+      var chat = document.getElementById('hubChat');
+      chat.innerHTML += '<div id="aiWr" class="hub-bub-ai-wrap"><div class="hub-bub-ai-label"><div class="hub-bub-ai-dot"></div><span class="hub-bub-ai-tag">AI返信提案 ('+E(selfName)+')</span></div><div id="aiBub" class="hub-bub-ai-text active"><span id="typInd" class="hub-typing-ind">生成中</span><span id="typTxt"></span></div><div id="aiAct" class="hub-actions"></div></div>';
+      chat.scrollTop = chat.scrollHeight;
+      var dots = 0, dotT = setInterval(function() { dots=(dots+1)%4; var el=document.getElementById('typInd'); if(el) el.textContent='生成中'+Array(dots+1).join('.'); }, 400);
+      timers.push(setTimeout(function() {
+        clearInterval(dotT); var ind=document.getElementById('typInd'); if(ind) ind.textContent='';
+        var txtEl=document.getElementById('typTxt'); if(!txtEl) return;
+        var chars=fullText.split(''), ci=0;
+        function tc() { if(curThr!==thrId||!typing) return;
+          if(ci<chars.length) { txtEl.textContent+=chars[ci]; ci++; chat.scrollTop=chat.scrollHeight; timers.push(setTimeout(tc, chars[ci-1]==='\n'?80:20+Math.random()*18)); }
+          else { var act=document.getElementById('aiAct'); if(act){act.classList.add('visible');act.innerHTML='<button class="hub-btn-send" onclick="hubSend()">送信する</button><button class="hub-btn-edit" onclick="hubEditAi()">\u270F 編集</button><button class="hub-btn-regen" onclick="hubRegen()">再生成</button>';} chat.scrollTop=chat.scrollHeight; }
+        } tc();
+      }, 1500));
+    }
+
+    window.hubView = function(v) { curView = v; if(v==='activity'){curCh=null;curThr=null;} renderAll(); };
+    window.hubTool = function(t) { curTool = t; curView = 'home'; curCh = null; curThr = null; cl(); renderAll(); };
+    window.hubChClick = function(id) { cl(); curCh = id; curThr = null; curView = 'home'; renderSidebar(); renderCenter(); renderRight(); };
+    window.hubThrClick = function(id) { cl(); editMode = false; curThr = id; if(round[id]===undefined) round[id]=0; renderCenter(); renderRight(); };
+    window.hubActClick = function(chId, thrId) { cl(); curView='home'; curCh=chId; curThr=thrId; editMode=false; if(round[thrId]===undefined) round[thrId]=0; renderAll(); };
+
+    window.hubEditAi = function() {
+      editMode=true; var thr=findThr(curThr), r=round[curThr]||0, origText=thr.steps[r*2+1].text;
+      var bub=document.getElementById('aiBub'); if(!bub) return;
+      bub.innerHTML='<textarea id="editTa" class="hub-edit-ta" rows="4">'+E(origText)+'</textarea><div class="hub-edit-note">\u203B デモのため、送信後の会話はシナリオに沿って進みます</div>';
+      var ta=document.getElementById('editTa'); if(ta){ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length);}
+      var act=document.getElementById('aiAct'); if(act) act.innerHTML='<button class="hub-btn-send" onclick="hubSend()">送信する</button><button class="hub-btn-cancel" onclick="hubCancelEdit()">キャンセル</button>';
+      document.getElementById('hubChat').scrollTop=document.getElementById('hubChat').scrollHeight;
+    };
+
+    window.hubCancelEdit = function() {
+      editMode=false; var thr=findThr(curThr),r=round[curThr]||0;
+      var bub=document.getElementById('aiBub'); if(bub) bub.innerHTML='<span id="typTxt">'+E(thr.steps[r*2+1].text)+'</span>';
+      var act=document.getElementById('aiAct'); if(act) act.innerHTML='<button class="hub-btn-send" onclick="hubSend()">送信する</button><button class="hub-btn-edit" onclick="hubEditAi()">\u270F 編集</button><button class="hub-btn-regen" onclick="hubRegen()">再生成</button>';
+    };
+
+    window.hubSend = function() {
+      cl(); var thrId=curThr, thr=findThr(thrId), r=round[thrId]||0, mp=Math.floor(thr.steps.length/2);
+      var chat=document.getElementById('hubChat'), bub=document.getElementById('aiBub');
+      if(bub){var ta=document.getElementById('editTa'); bub.innerHTML=E(ta?ta.value:thr.steps[r*2+1].text); bub.style.whiteSpace='pre-line'; bub.className='hub-bub-ai-text sent';}
+      editMode=false;
+      var act=document.getElementById('aiAct'); if(act){act.classList.add('visible');act.innerHTML='<span class="hub-sent-confirm"><span>\u2713</span> 送信完了</span>';}
+      var nr=r+1, selfName=findSelfName(curCh);
+      if(nr<mp) { timers.push(setTimeout(function(){if(curThr!==thrId)return;chat.innerHTML+='<div id="incNote" class="hub-incoming-note"><span>'+E(thr.from)+' が入力中...</span></div>';chat.scrollTop=chat.scrollHeight;timers.push(setTimeout(function(){if(curThr!==thrId)return;var n=document.getElementById('incNote');if(n)n.remove();round[thrId]=nr;buildChat(thrId,selfName);},2500));},1500)); }
+      else { round[thrId]=nr; timers.push(setTimeout(function(){if(curThr!==thrId)return;buildChat(thrId,selfName);},1000)); }
+    };
+
+    window.hubRegen = function() {
+      cl(); editMode=false; var thr=findThr(curThr),r=round[curThr]||0,selfName=findSelfName(curCh);
+      var wr=document.getElementById('aiWr'); if(wr)wr.remove();
+      startTyping(curThr,thr.steps[r*2+1].text,selfName);
+      document.getElementById('hubChat').scrollTop=document.getElementById('hubChat').scrollHeight;
+    };
+
+    function renderAll() { renderMenu(); renderSidebar(); renderCenter(); renderRight(); }
+    renderAll();
+  })();
+
+  // Scroll-based fade-in animation
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+  // ===== FAQ Toggle =====
+  window.hubToggleFaq = function(btn) {
+    var item = btn.closest('.hub-faq-item');
+    if (!item) return;
+    var allItems = document.querySelectorAll('.hub-faq-item');
+    for (var i = 0; i < allItems.length; i++) {
+      if (allItems[i] !== item) allItems[i].classList.remove('open');
+    }
+    item.classList.toggle('open');
+  };
+</script>
+
+<!-- Floating CTA Button -->
+<div class="hub-float-cta" id="hubFloatCta">
+  <a href="https://www.portament.jp/contact" target="_blank" rel="noopener noreferrer" class="hub-float-cta-btn">
+    <svg class="hub-float-cta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+    </svg>
+    無料相談する
+  </a>
+</div>
+</body>
+</html>
